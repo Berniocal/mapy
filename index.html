@@ -35,13 +35,12 @@ button:disabled{opacity:.45;cursor:default}
 .country{fill:var(--land);stroke:none}
 .borders{fill:none;stroke:#8d96a3;stroke-width:.65;vector-effect:non-scaling-stroke;pointer-events:none}
 .coast{fill:none;stroke:var(--coast);stroke-width:1.15;vector-effect:non-scaling-stroke;pointer-events:none}
-.micro-island{fill:#d7dce2;stroke:#59616d;stroke-width:.65;vector-effect:non-scaling-stroke;pointer-events:none}
 .answer-area{fill:rgba(21,115,71,.10);stroke:var(--good);stroke-width:1.5;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;pointer-events:none}
-.answer-dot{fill:var(--good);stroke:#fff;stroke-width:3;vector-effect:non-scaling-stroke;pointer-events:none}
-.guess-dot{fill:var(--bad);stroke:#fff;stroke-width:3;vector-effect:non-scaling-stroke;pointer-events:none}
+.answer-dot{fill:var(--good);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
+.guess-dot{fill:var(--bad);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
 .answer-line{fill:none;stroke:var(--bad);stroke-width:2.5;vector-effect:non-scaling-stroke;pointer-events:none}
 .answer-line.ok{stroke:var(--good)}
-.answer-label{font:700 13px system-ui,sans-serif;fill:#111;stroke:#fff;stroke-width:4;paint-order:stroke;stroke-linejoin:round;pointer-events:none}
+.answer-label{font:700 11px system-ui,sans-serif;fill:#111;stroke:#fff;stroke-width:3;paint-order:stroke;stroke-linejoin:round;pointer-events:none}
 .map-note{position:absolute;left:9px;bottom:7px;font-size:10px;color:#5b6470;background:rgba(255,255,255,.78);padding:3px 6px;border-radius:6px;pointer-events:none}
 .map-tools{position:absolute;right:10px;top:10px;display:grid;gap:5px}
 .map-tools button{width:42px;height:42px;padding:0;font-size:20px;background:rgba(255,255,255,.94);box-shadow:0 1px 5px rgba(0,0,0,.12)}
@@ -228,15 +227,17 @@ const TERMS = [
 ];
 
 const CAT_NAMES={pen:"Poloostrovy",isl:"Ostrovy a souostroví",sea:"Moře, zálivy a průlivy"};
-const EUROPE_BOX={type:"Polygon",coordinates:[[[-32,28],[65,28],[65,81],[-32,81],[-32,28]]]};
+const EUROPE_BOX={type:"Polygon",coordinates:[[[-31,30],[60,30],[60,77],[-31,77],[-31,30]]]};
 
 const svg=d3.select("#mapSvg");
-const base=svg.append("g");
-const answerLayer=base.append("g");
+const mapLayer=svg.append("g");
+const base=mapLayer.append("g");
+const answerLayer=svg.append("g");
 let countriesFeature=null, bordersFeature=null;
 let projection=d3.geoMercator();
 let path=d3.geoPath(projection);
 let currentTransform=d3.zoomIdentity;
+let lastAnswer=null;
 let ready=false, queue=[], index=-1, correct=0, locked=true;
 
 const qEl=document.getElementById("question");
@@ -257,21 +258,18 @@ function fmtKm(k){return k<10?k.toFixed(1).replace(".",",")+" km":Math.round(k).
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function setFeedback(kind,text){feedbackEl.className="feedback "+kind;feedbackEl.textContent=text}
 function clearFeedback(){feedbackEl.className="feedback";feedbackEl.textContent=""}
-function clearAnswer(){answerLayer.selectAll("*").remove()}
+function clearAnswer(){answerLayer.selectAll("*").remove();lastAnswer=null}
 
 function sizeMap(){
   if(!countriesFeature)return;
   const el=document.getElementById("mapWrap");
   const w=Math.max(320,el.clientWidth),h=Math.max(320,el.clientHeight);
   svg.attr("viewBox",`0 0 ${w} ${h}`);
-  projection=d3.geoMercator().fitExtent([[14,14],[w-14,h-14]],EUROPE_BOX);
+  projection=d3.geoMercator().fitExtent([[6,6],[w-6,h-6]],EUROPE_BOX);
   path=d3.geoPath(projection);
   drawBase();
-  clearAnswer();
-  if(index>=0 && index<queue.length && locked) {
-    // Po změně velikosti během zobrazené odpovědi ji pouze znovu nezakreslujeme.
-    // Další otázka se zobrazí normálně.
-  }
+  if(lastAnswer) renderAnswer();
+  else clearAnswer();
 }
 
 function drawBase(){
@@ -283,14 +281,6 @@ function drawBase(){
   mapBase.append("path").datum(countriesFeature).attr("class","coast").attr("d",path);
   mapBase.append("path").datum(bordersFeature).attr("class","borders").attr("d",path);
 
-  // Drobné ostrovy, které se v mapě 1:50m mohou ztratit, dostanou nenápadnou značku bez názvu.
-  const pts=TERMS.filter(t=>t.micro).map(t=>({lon:t.lon,lat:t.lat}));
-  mapBase.selectAll("circle.micro-island").data(pts).join("circle")
-    .attr("class","micro-island")
-    .attr("cx",d=>projection([d.lon,d.lat])[0])
-    .attr("cy",d=>projection([d.lon,d.lat])[1])
-    .attr("r",2.0);
-
   mapBase.lower();
 }
 
@@ -299,7 +289,8 @@ const zoom=d3.zoom()
   .filter(e => !locked || e.type==="wheel" || e.type==="mousedown" || e.type==="touchstart")
   .on("zoom",e=>{
     currentTransform=e.transform;
-    base.attr("transform",currentTransform);
+    mapLayer.attr("transform",currentTransform);
+    if(lastAnswer) renderAnswer();
   });
 svg.call(zoom).on("dblclick.zoom",null);
 
@@ -342,18 +333,37 @@ function showQuestion(){
   progEl.textContent=`${index+1} / ${queue.length}`;
   scoreEl.textContent=`Správně: ${correct}`;
 }
-function reveal(t,guess,dist,ok){
-  const area=d3.geoCircle().center([t.lon,t.lat]).radius(t.r/111.195)();
-  answerLayer.append("path").datum(area).attr("class","answer-area").attr("d",path);
+function renderAnswer(){
+  if(!lastAnswer)return;
+  const {t,guess,dist,ok}=lastAnswer;
+  answerLayer.selectAll("*").remove();
 
-  const [ax,ay]=projection([t.lon,t.lat]);
-  const [gx,gy]=projection([guess.lon,guess.lat]);
+  const a0=projection([t.lon,t.lat]);
+  const g0=projection([guess.lon,guess.lat]);
+  const [ax,ay]=currentTransform.apply(a0);
+  const [gx,gy]=currentTransform.apply(g0);
+
   answerLayer.append("line")
     .attr("class","answer-line"+(ok?" ok":""))
     .attr("x1",gx).attr("y1",gy).attr("x2",ax).attr("y2",ay);
-  answerLayer.append("circle").attr("class","guess-dot").attr("cx",gx).attr("cy",gy).attr("r",7);
-  answerLayer.append("circle").attr("class","answer-dot").attr("cx",ax).attr("cy",ay).attr("r",8);
-  answerLayer.append("text").attr("class","answer-label").attr("x",ax+11).attr("y",ay-11).text(t.n);
+
+  answerLayer.append("circle")
+    .attr("class","guess-dot")
+    .attr("cx",gx).attr("cy",gy).attr("r",4);
+
+  answerLayer.append("circle")
+    .attr("class","answer-dot")
+    .attr("cx",ax).attr("cy",ay).attr("r",4);
+
+  answerLayer.append("text")
+    .attr("class","answer-label")
+    .attr("x",ax+7).attr("y",ay-7)
+    .text(t.n);
+}
+
+function reveal(t,guess,dist,ok){
+  lastAnswer={t,guess,dist,ok};
+  renderAnswer();
 
   if(ok)setFeedback("good",`Správně. Od cílového bodu jsi byl(a) ${fmtKm(dist)}.`);
   else setFeedback("bad",`Vedle o ${fmtKm(dist)}. Zeleně je označená správná poloha.`);
