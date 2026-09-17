@@ -227,7 +227,7 @@ const TERMS = [
 ];
 
 const CAT_NAMES={pen:"Poloostrovy",isl:"Ostrovy a souostroví",sea:"Moře, zálivy a průlivy"};
-const EUROPE_BOX={type:"Polygon",coordinates:[[[-31,30],[60,30],[60,77],[-31,77],[-31,30]]]};
+const EUROPE_BOX={type:"Polygon",coordinates:[[[-31,30],[-31,77],[60,77],[60,30],[-31,30]]]};
 
 const svg=d3.select("#mapSvg");
 const mapLayer=svg.append("g");
@@ -265,7 +265,7 @@ function sizeMap(){
   const el=document.getElementById("mapWrap");
   const w=Math.max(320,el.clientWidth),h=Math.max(320,el.clientHeight);
   svg.attr("viewBox",`0 0 ${w} ${h}`);
-  projection=d3.geoMercator().fitExtent([[6,6],[w-6,h-6]],EUROPE_BOX);
+  projection=d3.geoMercator().fitExtent([[6,6],[w-6,h-6]],EUROPE_BOX).clipExtent([[0,0],[w,h]]);
   path=d3.geoPath(projection);
   drawBase();
   if(lastAnswer) renderAnswer();
