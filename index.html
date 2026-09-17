@@ -19,6 +19,7 @@ header{background:#fff;border-bottom:1px solid var(--line);padding:9px 13px;disp
 .title{font-size:17px;font-weight:800;white-space:nowrap}
 .stats{font-size:13px;color:var(--muted);display:flex;gap:12px;white-space:nowrap}
 .question-wrap{min-width:0}
+.header-actions{display:flex;gap:7px;align-items:center;flex:0 0 auto}
 .question{font-size:20px;line-height:1.1;font-weight:850;overflow-wrap:anywhere}
 .category{font-size:12px;color:var(--muted);font-weight:650;margin-top:3px}
 button,select{font:inherit;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);min-height:40px;padding:7px 11px}
@@ -30,7 +31,7 @@ button:disabled{opacity:.45;cursor:default}
 .feedback.bad{display:block;color:#912018;background:#fef3f2;border-color:#fecdca}
 .feedback.neutral{display:block;color:#344054;background:#f2f4f7;border-color:#eaecf0}
 
-.map-wrap{position:relative;min-height:0;background:var(--sea);overflow:hidden;touch-action:none}
+.map-wrap{position:relative;min-height:0;background:var(--sea);overflow:hidden;touch-action:none;-webkit-tap-highlight-color:transparent}
 #mapSvg{display:block;width:100%;height:100%;cursor:crosshair;user-select:none;-webkit-user-select:none}
 .country{fill:var(--land);stroke:none}
 .borders{fill:none;stroke:#8d96a3;stroke-width:.65;vector-effect:non-scaling-stroke;pointer-events:none}
@@ -58,15 +59,69 @@ button:disabled{opacity:.45;cursor:default}
 .check input{width:19px;height:19px}
 .settingline{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
 .hint{font-size:12px;color:var(--muted);margin-top:10px}
+
+.category-selectors{display:grid;gap:8px}
+.term-group{border:1px solid var(--line);border-radius:11px;background:#fafafa;overflow:hidden}
+.term-group summary{
+  list-style:none;display:flex;align-items:center;gap:9px;
+  min-height:44px;padding:9px 11px;cursor:pointer;font-weight:800;
+}
+.term-group summary::-webkit-details-marker{display:none}
+.term-group summary::after{content:"▾";margin-left:auto;color:var(--muted);transition:transform .15s}
+.term-group:not([open]) summary::after{transform:rotate(-90deg)}
+.term-group summary input{width:19px;height:19px;flex:0 0 auto}
+.term-count{font-size:11px;color:var(--muted);font-weight:650;margin-left:4px}
+.term-list{display:grid;gap:2px;padding:3px 8px 9px 35px;border-top:1px solid #eceff3;background:#fff}
+.term-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;min-height:34px;font-size:13px}
+.term-item input{width:17px;height:17px}
+.delete-term{
+  min-height:28px!important;height:28px;padding:0 8px!important;
+  border-radius:8px!important;color:#912018;font-size:13px;font-weight:800;
+}
+.custom-tools{display:grid;gap:7px}
+.custom-actions{display:flex;gap:7px;flex-wrap:wrap}
+.smallbtn{min-height:34px!important;padding:5px 9px!important;font-size:12px!important;font-weight:700!important}
+.filebtn{
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+  border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text)
+}
+.formgrid{display:grid;gap:12px}
+.formgrid label{display:grid;gap:5px;font-size:13px;font-weight:750}
+.formgrid input,.formgrid select{width:100%;min-height:42px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;background:#fff}
+.tolerance-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+
 .end{text-align:center}
 .bigscore{font-size:42px;font-weight:850;margin:9px 0}
 .actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
 @media(max-width:650px){
-  header{padding:8px 9px}
-  .title{font-size:14px}
-  .stats{font-size:11px;gap:7px}
-  .question{font-size:18px}
-  .panel{padding:16px}
+  body{overflow:hidden}
+  header{padding:7px 8px;gap:5px}
+  .row{gap:7px}
+  .title{font-size:13px}
+  .stats{font-size:10px;gap:6px}
+  .question{font-size:17px;line-height:1.05}
+  .category{font-size:11px}
+  .header-actions{gap:5px}
+  #backBtn{min-height:38px;padding:6px 8px;font-size:12px}
+  #nextBtn{min-width:68px;min-height:38px;padding:6px 9px}
+  .feedback{font-size:12px;padding:6px 8px}
+  .panel{padding:15px;border-radius:14px;max-height:94vh}
+  .panel h1{font-size:21px}
+  .term-group summary{min-height:42px;padding:8px 10px}
+  .term-list{padding-left:28px}
+  .term-item{font-size:12px}
+  .check{padding:9px 10px}
+  .map-tools{right:7px;top:7px;gap:4px}
+  .map-tools button{width:38px;height:38px;font-size:18px}
+  .map-note{left:6px;bottom:5px;font-size:9px}
+}
+@media(max-width:390px){
+  .answer-label{font-size:10px}
+  .title{font-size:12px}
+  .stats{font-size:9px}
+  .question{font-size:16px}
+  #backBtn{font-size:11px;padding:5px 6px}
+  #nextBtn{min-width:62px;padding:5px 7px}
 }
 </style>
 </head>
@@ -82,7 +137,10 @@ button:disabled{opacity:.45;cursor:default}
       <div id="question" class="question">Načítám mapu…</div>
       <div id="category" class="category"></div>
     </div>
-    <button id="nextBtn" class="primary" disabled>Další</button>
+    <div class="header-actions">
+      <button id="backBtn" type="button">Zpět na výběr</button>
+      <button id="nextBtn" class="primary" disabled>Další</button>
+    </div>
   </div>
   <div id="feedback" class="feedback"></div>
 </header>
@@ -102,11 +160,7 @@ button:disabled{opacity:.45;cursor:default}
       <h1>Evropa – slepá mapa</h1>
       <p>Náhodně se zobrazí pojem. Klikni do mapy tam, kde leží. Při chybě se ukáže správná poloha a vzdálenost od tvého kliknutí.</p>
       <div class="settings">
-        <div class="checks">
-          <label class="check"><input id="catPen" type="checkbox" checked> Poloostrovy</label>
-          <label class="check"><input id="catIsl" type="checkbox" checked> Ostrovy a souostroví</label>
-          <label class="check"><input id="catSea" type="checkbox" checked> Moře, zálivy a průlivy</label>
-        </div>
+        <div id="categorySelectors" class="category-selectors"></div>
         <div class="settingline">
           <label for="count">Počet otázek</label>
           <select id="count">
@@ -116,6 +170,17 @@ button:disabled{opacity:.45;cursor:default}
             <option value="all">Všechny vybrané</option>
           </select>
         </div>
+
+        <div class="custom-tools">
+          <button id="addTermBtn" type="button">＋ Přidat vlastní pojem</button>
+          <div class="custom-actions">
+            <button id="exportTermsBtn" type="button" class="smallbtn">Export vlastních</button>
+            <label class="smallbtn filebtn">Import vlastních
+              <input id="importTermsInput" type="file" accept=".json,application/json" hidden>
+            </label>
+          </div>
+        </div>
+
         <button id="startBtn" class="primary" disabled>Spustit</button>
       </div>
       <div class="hint">Mapa je vektorová a nemá žádné názvy. Není potřeba žádný API klíč. Kolečkem nebo dvěma prsty lze mapu přibližovat.</div>
@@ -130,6 +195,36 @@ button:disabled{opacity:.45;cursor:default}
       <div class="actions">
         <button id="againBtn" class="primary">Hrát znovu</button>
         <button id="settingsBtn">Změnit nastavení</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="addTermScreen" class="overlay hidden">
+    <div class="panel">
+      <h2 style="margin-top:0">Přidat vlastní pojem</h2>
+      <p id="pickedPositionText">Poloha byla vybrána v mapě.</p>
+      <div class="formgrid">
+        <label>Název
+          <input id="newTermName" type="text" placeholder="např. Bornholm" autocomplete="off">
+        </label>
+        <label>Skupina
+          <select id="newTermCategory">
+            <option value="pen">Poloostrovy</option>
+            <option value="isl">Ostrovy a souostroví</option>
+            <option value="sea">Moře, zálivy a průlivy</option>
+          </select>
+        </label>
+        <label>Tolerance
+          <div class="tolerance-row">
+            <input id="newTermRadius" type="number" min="10" max="1000" step="10" value="100">
+            <span>km</span>
+          </div>
+        </label>
+      </div>
+      <div class="hint">Tolerance určuje, jak blízko musí žák kliknout, aby se odpověď počítala jako správná.</div>
+      <div class="actions" style="margin-top:16px">
+        <button id="saveTermBtn" class="primary">Uložit pojem</button>
+        <button id="cancelTermBtn">Zrušit</button>
       </div>
     </div>
   </div>
@@ -226,6 +321,29 @@ const TERMS = [
  {n:"Øresund",c:"sea",lat:55.9,lon:12.7,r:60}
 ];
 
+TERMS.forEach((t,i)=>{ if(!t.id)t.id="base-"+i; t.custom=false; });
+
+const CUSTOM_STORAGE_KEY="evropaKlikaciMapaCustomTermsV1";
+let customTerms=[];
+try{
+  const saved=JSON.parse(localStorage.getItem(CUSTOM_STORAGE_KEY)||"[]");
+  if(Array.isArray(saved)){
+    customTerms=saved.filter(t =>
+      t && typeof t.n==="string" &&
+      ["pen","isl","sea"].includes(t.c) &&
+      Number.isFinite(+t.lat) && Number.isFinite(+t.lon) && Number.isFinite(+t.r)
+    ).map(t=>({
+      id:t.id||("custom-"+Date.now()+"-"+Math.random().toString(36).slice(2)),
+      n:t.n.trim(),c:t.c,lat:+t.lat,lon:+t.lon,r:+t.r,custom:true
+    }));
+  }
+}catch(e){ customTerms=[]; }
+
+function allTerms(){ return TERMS.concat(customTerms); }
+function saveCustomTerms(){
+  localStorage.setItem(CUSTOM_STORAGE_KEY,JSON.stringify(customTerms));
+}
+
 const CAT_NAMES={pen:"Poloostrovy",isl:"Ostrovy a souostroví",sea:"Moře, zálivy a průlivy"};
 const EUROPE_BOX={type:"Polygon",coordinates:[[[-31,30],[-31,77],[60,77],[60,30],[-31,30]]]};
 
@@ -239,6 +357,7 @@ let path=d3.geoPath(projection);
 let currentTransform=d3.zoomIdentity;
 let lastAnswer=null;
 let ready=false, queue=[], index=-1, correct=0, locked=true;
+let addMode=false, pendingPosition=null;
 
 const qEl=document.getElementById("question");
 const catEl=document.getElementById("category");
@@ -301,18 +420,113 @@ document.getElementById("zoomIn").onclick=()=>svg.transition().duration(160).cal
 document.getElementById("zoomOut").onclick=()=>svg.transition().duration(160).call(zoom.scaleBy,1/1.45);
 document.getElementById("resetView").onclick=()=>resetView();
 
-function selectedCats(){
-  const a=[];
-  if(document.getElementById("catPen").checked)a.push("pen");
-  if(document.getElementById("catIsl").checked)a.push("isl");
-  if(document.getElementById("catSea").checked)a.push("sea");
-  return a;
+function renderTermSelectors(){
+  const root=document.getElementById("categorySelectors");
+  if(!root)return;
+
+  const previous=new Set(
+    [...root.querySelectorAll('input.term-check:checked')].map(x=>x.dataset.id)
+  );
+  const hadAny=root.querySelectorAll('input.term-check').length>0;
+
+  root.innerHTML="";
+  for(const cat of ["pen","isl","sea"]){
+    const items=allTerms().filter(t=>t.c===cat);
+    const details=document.createElement("details");
+    details.className="term-group";
+    details.open=false;
+
+    const summary=document.createElement("summary");
+    const master=document.createElement("input");
+    master.type="checkbox";
+    master.className="master-check";
+    master.dataset.cat=cat;
+    master.checked=true;
+
+    const title=document.createElement("span");
+    title.textContent=CAT_NAMES[cat];
+
+    const count=document.createElement("span");
+    count.className="term-count";
+    count.textContent=`(${items.length})`;
+
+    summary.append(master,title,count);
+    details.appendChild(summary);
+
+    const list=document.createElement("div");
+    list.className="term-list";
+
+    for(const t of items){
+      const row=document.createElement("label");
+      row.className="term-item";
+
+      const cb=document.createElement("input");
+      cb.type="checkbox";
+      cb.className="term-check";
+      cb.dataset.id=t.id;
+      cb.dataset.cat=cat;
+      cb.checked=hadAny ? previous.has(t.id) : true;
+
+      const name=document.createElement("span");
+      name.textContent=t.n;
+
+      row.append(cb,name);
+
+      if(t.custom){
+        const del=document.createElement("button");
+        del.type="button";
+        del.className="delete-term";
+        del.textContent="×";
+        del.title="Smazat vlastní pojem";
+        del.addEventListener("click",e=>{
+          e.preventDefault();e.stopPropagation();
+          if(confirm(`Smazat vlastní pojem „${t.n}“?`)){
+            customTerms=customTerms.filter(x=>x.id!==t.id);
+            saveCustomTerms();
+            renderTermSelectors();
+          }
+        });
+        row.appendChild(del);
+      }else{
+        row.appendChild(document.createElement("span"));
+      }
+      list.appendChild(row);
+    }
+
+    details.appendChild(list);
+    root.appendChild(details);
+
+    const syncMaster=()=>{
+      const cbs=[...list.querySelectorAll(".term-check")];
+      const checked=cbs.filter(x=>x.checked).length;
+      master.checked=checked===cbs.length && cbs.length>0;
+      master.indeterminate=checked>0 && checked<cbs.length;
+    };
+    syncMaster();
+
+    master.addEventListener("click",e=>e.stopPropagation());
+    master.addEventListener("change",()=>{
+      list.querySelectorAll(".term-check").forEach(cb=>cb.checked=master.checked);
+      master.indeterminate=false;
+    });
+    list.addEventListener("change",syncMaster);
+
+    summary.addEventListener("click",e=>{
+      if(e.target===master) e.preventDefault();
+    });
+  }
+}
+
+function selectedTerms(){
+  const ids=new Set(
+    [...document.querySelectorAll("#categorySelectors .term-check:checked")].map(x=>x.dataset.id)
+  );
+  return allTerms().filter(t=>ids.has(t.id));
 }
 function startGame(){
   if(!ready)return;
-  const cats=selectedCats();
-  if(!cats.length){alert("Vyber alespoň jednu skupinu pojmů.");return}
-  const pool=TERMS.filter(t=>cats.includes(t.c));
+  const pool=selectedTerms();
+  if(!pool.length){alert("Vyber alespoň jeden pojem.");return}
   const raw=document.getElementById("count").value;
   const amount=raw==="all"?pool.length:Math.min(+raw,pool.length);
   queue=shuffle(pool).slice(0,amount);
@@ -370,7 +584,7 @@ function reveal(t,guess,dist,ok){
 }
 
 svg.on("click",event=>{
-  if(!ready||locked||index<0||index>=queue.length||event.defaultPrevented)return;
+  if(!ready||event.defaultPrevented)return;
   const pointer=d3.pointer(event,svg.node());
   const p=currentTransform.invert(pointer);
   const ll=projection.invert(p);
@@ -378,6 +592,20 @@ svg.on("click",event=>{
   const [lon,lat]=ll;
   if(lat<25||lat>84||lon<-38||lon>72)return;
 
+  if(addMode){
+    pendingPosition={lat,lon};
+    addMode=false;
+    locked=true;
+    document.getElementById("pickedPositionText").textContent=
+      `Vybraná poloha: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°.`;
+    document.getElementById("addTermScreen").classList.remove("hidden");
+    qEl.textContent="Přidat vlastní pojem";
+    catEl.textContent="Vyplň název, skupinu a toleranci.";
+    setTimeout(()=>document.getElementById("newTermName").focus(),50);
+    return;
+  }
+
+  if(locked||index<0||index>=queue.length)return;
   const t=queue[index],dist=haversine(lat,lon,t.lat,t.lon),ok=dist<=t.r;
   locked=true;if(ok)correct++;
   scoreEl.textContent=`Správně: ${correct}`;
@@ -386,6 +614,25 @@ svg.on("click",event=>{
 });
 
 nextBtn.onclick=showQuestion;
+
+document.getElementById("backBtn").onclick=()=>{
+  addMode=false;
+  pendingPosition=null;
+  locked=true;
+  clearAnswer();
+  clearFeedback();
+  resetView();
+
+  document.getElementById("endScreen").classList.add("hidden");
+  document.getElementById("addTermScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+
+  qEl.textContent="Vyber nastavení a spusť hru";
+  catEl.textContent="";
+  progEl.textContent="0 / 0";
+  scoreEl.textContent="Správně: 0";
+  nextBtn.disabled=true;
+};
 document.getElementById("startBtn").onclick=startGame;
 document.getElementById("againBtn").onclick=()=>{
   document.getElementById("endScreen").classList.add("hidden");startGame()
@@ -421,6 +668,94 @@ async function getWorld(){
   throw lastErr||new Error("Mapová data se nepodařilo stáhnout.");
 }
 
+
+document.getElementById("addTermBtn").addEventListener("click",()=>{
+  if(!ready)return;
+  pendingPosition=null;
+  addMode=true;
+  locked=true;
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("endScreen").classList.add("hidden");
+  clearAnswer();clearFeedback();resetView();
+  qEl.textContent="Klikni do mapy na správnou polohu";
+  catEl.textContent="Přidávání vlastního pojmu";
+  progEl.textContent="";
+  nextBtn.disabled=true;
+});
+
+document.getElementById("cancelTermBtn").addEventListener("click",()=>{
+  addMode=false;pendingPosition=null;
+  document.getElementById("addTermScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+  qEl.textContent="Vyber nastavení a spusť hru";
+  catEl.textContent="";
+  progEl.textContent="0 / 0";
+});
+
+document.getElementById("saveTermBtn").addEventListener("click",()=>{
+  const name=document.getElementById("newTermName").value.trim();
+  const cat=document.getElementById("newTermCategory").value;
+  const radius=+document.getElementById("newTermRadius").value;
+
+  if(!pendingPosition){ alert("Nejdřív vyber polohu v mapě."); return; }
+  if(!name){ alert("Zadej název pojmu."); return; }
+  if(!["pen","isl","sea"].includes(cat)){ alert("Vyber skupinu."); return; }
+  if(!Number.isFinite(radius)||radius<10||radius>1000){
+    alert("Tolerance musí být mezi 10 a 1000 km."); return;
+  }
+
+  const term={
+    id:"custom-"+Date.now()+"-"+Math.random().toString(36).slice(2),
+    n:name,c:cat,lat:pendingPosition.lat,lon:pendingPosition.lon,r:radius,custom:true
+  };
+  customTerms.push(term);
+  saveCustomTerms();
+  renderTermSelectors();
+
+  document.getElementById("newTermName").value="";
+  document.getElementById("newTermRadius").value="100";
+  pendingPosition=null;
+  document.getElementById("addTermScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+  qEl.textContent="Vyber nastavení a spusť hru";
+  catEl.textContent="";
+  progEl.textContent="0 / 0";
+});
+
+document.getElementById("exportTermsBtn").addEventListener("click",()=>{
+  const blob=new Blob([JSON.stringify(customTerms,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="evropa-vlastni-pojmy.json";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),500);
+});
+
+document.getElementById("importTermsInput").addEventListener("change",async e=>{
+  const file=e.target.files?.[0];
+  if(!file)return;
+  try{
+    const arr=JSON.parse(await file.text());
+    if(!Array.isArray(arr))throw new Error();
+    const imported=arr.filter(t =>
+      t && typeof t.n==="string" &&
+      ["pen","isl","sea"].includes(t.c) &&
+      Number.isFinite(+t.lat) && Number.isFinite(+t.lon) && Number.isFinite(+t.r)
+    ).map(t=>({
+      id:"custom-"+Date.now()+"-"+Math.random().toString(36).slice(2),
+      n:t.n.trim(),c:t.c,lat:+t.lat,lon:+t.lon,r:+t.r,custom:true
+    }));
+    customTerms=customTerms.concat(imported);
+    saveCustomTerms();
+    renderTermSelectors();
+    alert(`Importováno: ${imported.length} pojmů.`);
+  }catch(err){
+    alert("Soubor se nepodařilo načíst jako platný export vlastních pojmů.");
+  }finally{
+    e.target.value="";
+  }
+});
+
 async function init(){
   try{
     if(!window.d3||!window.topojson)throw new Error("Nepodařilo se načíst knihovnu mapy.");
@@ -429,6 +764,7 @@ async function init(){
     bordersFeature=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
     sizeMap();
     ready=true;locked=true;
+    renderTermSelectors();
     loading.style.display="none";
     document.getElementById("startBtn").disabled=false;
     qEl.textContent="Vyber nastavení a spusť hru";
