@@ -1,175 +1,107 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Evropa – klikni do mapy</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Evropa – klikni do mapy</title>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --text:#15171b; --muted:#667085;
+  --line:#d8dde5; --land:#e8ebef; --coast:#30343b; --sea:#dfeef7;
+  --accent:#2457d6; --good:#157347; --bad:#b42318;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+body{overflow:hidden}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr}
+header{background:#fff;border-bottom:1px solid var(--line);padding:9px 13px;display:grid;gap:7px;z-index:10}
+.row{display:flex;gap:12px;align-items:center;justify-content:space-between;min-width:0}
+.title{font-size:17px;font-weight:800;white-space:nowrap}
+.stats{font-size:13px;color:var(--muted);display:flex;gap:12px;white-space:nowrap}
+.question-wrap{min-width:0}
+.question{font-size:20px;line-height:1.1;font-weight:850;overflow-wrap:anywhere}
+.category{font-size:12px;color:var(--muted);font-weight:650;margin-top:3px}
+button,select{font:inherit;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);min-height:40px;padding:7px 11px}
+button{font-weight:750;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+.feedback{display:none;border-radius:10px;padding:7px 10px;font-size:14px;line-height:1.25;border:1px solid transparent}
+.feedback.good{display:block;color:#05603a;background:#ecfdf3;border-color:#abefc6}
+.feedback.bad{display:block;color:#912018;background:#fef3f2;border-color:#fecdca}
+.feedback.neutral{display:block;color:#344054;background:#f2f4f7;border-color:#eaecf0}
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIINfQ3ynlFh4I6hVt1C5AQbF1nT6Y9R8xk=" crossorigin="">
+.map-wrap{position:relative;min-height:0;background:var(--sea);overflow:hidden;touch-action:none}
+#mapSvg{display:block;width:100%;height:100%;cursor:crosshair;user-select:none;-webkit-user-select:none}
+.country{fill:var(--land);stroke:none}
+.borders{fill:none;stroke:#8d96a3;stroke-width:.65;vector-effect:non-scaling-stroke;pointer-events:none}
+.coast{fill:none;stroke:var(--coast);stroke-width:1.15;vector-effect:non-scaling-stroke;pointer-events:none}
+.micro-island{fill:#d7dce2;stroke:#59616d;stroke-width:.65;vector-effect:non-scaling-stroke;pointer-events:none}
+.answer-area{fill:rgba(21,115,71,.10);stroke:var(--good);stroke-width:1.5;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;pointer-events:none}
+.answer-dot{fill:var(--good);stroke:#fff;stroke-width:3;vector-effect:non-scaling-stroke;pointer-events:none}
+.guess-dot{fill:var(--bad);stroke:#fff;stroke-width:3;vector-effect:non-scaling-stroke;pointer-events:none}
+.answer-line{fill:none;stroke:var(--bad);stroke-width:2.5;vector-effect:non-scaling-stroke;pointer-events:none}
+.answer-line.ok{stroke:var(--good)}
+.answer-label{font:700 13px system-ui,sans-serif;fill:#111;stroke:#fff;stroke-width:4;paint-order:stroke;stroke-linejoin:round;pointer-events:none}
+.map-note{position:absolute;left:9px;bottom:7px;font-size:10px;color:#5b6470;background:rgba(255,255,255,.78);padding:3px 6px;border-radius:6px;pointer-events:none}
+.map-tools{position:absolute;right:10px;top:10px;display:grid;gap:5px}
+.map-tools button{width:42px;height:42px;padding:0;font-size:20px;background:rgba(255,255,255,.94);box-shadow:0 1px 5px rgba(0,0,0,.12)}
+.loading{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;color:#4b5563;background:var(--sea);z-index:4}
+.loading.error{padding:25px;text-align:center;color:#912018}
 
-  <style>
-    :root{
-      --bg:#f5f6f8;
-      --card:#fff;
-      --text:#16181d;
-      --muted:#667085;
-      --line:#dfe3e8;
-      --good:#16794a;
-      --bad:#b42318;
-      --accent:#2457d6;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:var(--bg)}
-    body{overflow:hidden}
-    .app{height:100%;display:grid;grid-template-rows:auto 1fr}
-    header{
-      background:var(--card);
-      border-bottom:1px solid var(--line);
-      padding:10px 14px;
-      display:grid;
-      gap:8px;
-      z-index:1000;
-    }
-    .toprow{display:flex;gap:12px;align-items:center;justify-content:space-between;min-width:0}
-    .title{font-weight:750;font-size:18px;white-space:nowrap}
-    .stats{display:flex;gap:12px;color:var(--muted);font-size:14px;white-space:nowrap}
-    .questionrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-    .question{
-      min-width:0;
-      font-size:20px;
-      font-weight:800;
-      line-height:1.15;
-      overflow-wrap:anywhere;
-    }
-    .category{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
-    button,select{
-      font:inherit;
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      border-radius:10px;
-      min-height:42px;
-      padding:8px 12px;
-    }
-    button{cursor:pointer;font-weight:700}
-    button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-    button:disabled{opacity:.45;cursor:default}
-    .feedback{
-      display:none;
-      border-radius:10px;
-      padding:8px 10px;
-      font-size:14px;
-      line-height:1.25;
-      border:1px solid transparent;
-    }
-    .feedback.good{display:block;background:#ecfdf3;border-color:#abefc6;color:#05603a}
-    .feedback.bad{display:block;background:#fef3f2;border-color:#fecdca;color:#912018}
-    .feedback.neutral{display:block;background:#f2f4f7;border-color:#eaecf0;color:#344054}
-    #map{height:100%;width:100%;background:#e9edf2}
-    .leaflet-container{font:inherit}
-    .leaflet-control-attribution{font-size:10px}
-    .answer-dot{
-      width:18px;height:18px;border-radius:50%;
-      border:3px solid white;
-      box-shadow:0 0 0 2px rgba(0,0,0,.18);
-      background:#16794a;
-    }
-    .guess-dot{
-      width:16px;height:16px;border-radius:50%;
-      border:3px solid white;
-      box-shadow:0 0 0 2px rgba(0,0,0,.18);
-      background:#b42318;
-    }
-    .startscreen{
-      position:absolute;
-      z-index:1200;
-      inset:0;
-      display:grid;
-      place-items:center;
-      padding:18px;
-      background:rgba(245,246,248,.92);
-      backdrop-filter:blur(4px);
-    }
-    .panel{
-      width:min(560px,100%);
-      max-height:min(720px,92vh);
-      overflow:auto;
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:18px;
-      box-shadow:0 18px 50px rgba(16,24,40,.16);
-      padding:20px;
-    }
-    .panel h1{font-size:24px;margin:0 0 8px}
-    .panel p{color:var(--muted);margin:0 0 18px;line-height:1.45}
-    .settings{display:grid;gap:14px}
-    .checks{display:grid;gap:8px}
-    label.check{
-      display:flex;align-items:center;gap:9px;
-      border:1px solid var(--line);
-      border-radius:10px;padding:10px 12px;
-      background:#fafafa;
-      cursor:pointer;
-    }
-    input[type=checkbox]{width:19px;height:19px}
-    .settingline{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
-    .hint{font-size:12px;color:var(--muted);margin-top:10px}
-    .endbox{
-      display:none;
-      position:absolute;
-      z-index:1300;
-      inset:0;
-      place-items:center;
-      padding:18px;
-      background:rgba(245,246,248,.88);
-      backdrop-filter:blur(4px);
-    }
-    .endbox.show{display:grid}
-    .endpanel{
-      width:min(460px,100%);
-      background:#fff;border:1px solid var(--line);border-radius:18px;
-      padding:24px;text-align:center;box-shadow:0 18px 50px rgba(16,24,40,.16)
-    }
-    .bigscore{font-size:42px;font-weight:850;margin:10px 0}
-    .actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
-    @media (max-width:650px){
-      header{padding:8px 10px}
-      .title{font-size:15px}
-      .stats{font-size:12px;gap:8px}
-      .question{font-size:18px}
-      .questionrow{grid-template-columns:1fr auto}
-      button{min-height:40px;padding:7px 10px}
-      .panel{padding:16px}
-    }
-  </style>
+.overlay{position:absolute;z-index:30;inset:0;display:grid;place-items:center;padding:18px;background:rgba(244,246,248,.92);backdrop-filter:blur(4px)}
+.overlay.hidden{display:none}
+.panel{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 50px rgba(16,24,40,.16)}
+.panel h1{font-size:24px;margin:0 0 8px}
+.panel p{margin:0 0 17px;color:var(--muted);line-height:1.45}
+.settings{display:grid;gap:13px}
+.checks{display:grid;gap:8px}
+.check{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fafafa;cursor:pointer}
+.check input{width:19px;height:19px}
+.settingline{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.hint{font-size:12px;color:var(--muted);margin-top:10px}
+.end{text-align:center}
+.bigscore{font-size:42px;font-weight:850;margin:9px 0}
+.actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+@media(max-width:650px){
+  header{padding:8px 9px}
+  .title{font-size:14px}
+  .stats{font-size:11px;gap:7px}
+  .question{font-size:18px}
+  .panel{padding:16px}
+}
+</style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <div class="toprow">
-      <div class="title">Evropa – klikni do mapy</div>
-      <div class="stats">
-        <span id="progress">0 / 0</span>
-        <span id="score">Správně: 0</span>
-      </div>
+<header>
+  <div class="row">
+    <div class="title">Evropa – klikni do mapy</div>
+    <div class="stats"><span id="progress">0 / 0</span><span id="score">Správně: 0</span></div>
+  </div>
+  <div class="row">
+    <div class="question-wrap">
+      <div id="question" class="question">Načítám mapu…</div>
+      <div id="category" class="category"></div>
     </div>
-    <div class="questionrow">
-      <div>
-        <div id="question" class="question">Vyber nastavení a spusť hru</div>
-        <div id="category" class="category"></div>
-      </div>
-      <button id="nextBtn" class="primary" disabled>Další</button>
-    </div>
-    <div id="feedback" class="feedback"></div>
-  </header>
+    <button id="nextBtn" class="primary" disabled>Další</button>
+  </div>
+  <div id="feedback" class="feedback"></div>
+</header>
 
-  <div id="map"></div>
+<div class="map-wrap" id="mapWrap">
+  <svg id="mapSvg" aria-label="Slepá mapa Evropy"></svg>
+  <div id="loading" class="loading">Načítám slepou mapu Evropy…</div>
+  <div class="map-tools">
+    <button id="zoomIn" title="Přiblížit">+</button>
+    <button id="zoomOut" title="Oddálit">−</button>
+    <button id="resetView" title="Celá Evropa">⌂</button>
+  </div>
+  <div class="map-note">Natural Earth / world-atlas · bez API klíče</div>
 
-  <div id="startScreen" class="startscreen">
+  <div id="startScreen" class="overlay">
     <div class="panel">
       <h1>Evropa – slepá mapa</h1>
-      <p>Objeví se náhodný pojem. Klikni do mapy tam, kde podle tebe leží. Po chybě uvidíš správnou polohu i vzdálenost od svého kliknutí.</p>
+      <p>Náhodně se zobrazí pojem. Klikni do mapy tam, kde leží. Při chybě se ukáže správná poloha a vzdálenost od tvého kliknutí.</p>
       <div class="settings">
         <div class="checks">
           <label class="check"><input id="catPen" type="checkbox" checked> Poloostrovy</label>
@@ -185,16 +117,16 @@
             <option value="all">Všechny vybrané</option>
           </select>
         </div>
-        <button id="startBtn" class="primary">Spustit</button>
+        <button id="startBtn" class="primary" disabled>Spustit</button>
       </div>
-      <div class="hint">Mapa je bez názvů. U rozsáhlých útvarů je uznávaná větší oblast, u malých ostrovů a průlivů menší.</div>
+      <div class="hint">Mapa je vektorová a nemá žádné názvy. Není potřeba žádný API klíč. Kolečkem nebo dvěma prsty lze mapu přibližovat.</div>
     </div>
   </div>
 
-  <div id="endBox" class="endbox">
-    <div class="endpanel">
+  <div id="endScreen" class="overlay hidden">
+    <div class="panel end">
       <h2>Hotovo</h2>
-      <div id="finalScore" class="bigscore">0 / 0</div>
+      <div id="finalScore" class="bigscore"></div>
       <div id="finalText" style="color:var(--muted);margin-bottom:18px"></div>
       <div class="actions">
         <button id="againBtn" class="primary">Hrát znovu</button>
@@ -203,312 +135,301 @@
     </div>
   </div>
 </div>
+</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
 (() => {
-  "use strict";
+"use strict";
 
-  // Reprezentativní body + přiměřená tolerance v km.
-  // U velkých moří/poloostrovů je tolerance záměrně větší než u malých ostrovů a průlivů.
-  const TERMS = [
-    // Poloostrovy
-    {n:"Skandinávský poloostrov", c:"pen", lat:63.2, lon:15.0, r:430},
-    {n:"Pyrenejský (Iberský) poloostrov", c:"pen", lat:40.2, lon:-4.0, r:320},
-    {n:"Apeninský poloostrov", c:"pen", lat:42.4, lon:12.6, r:260},
-    {n:"Apulie", c:"pen", lat:40.9, lon:16.7, r:125},
-    {n:"Kalábrie", c:"pen", lat:39.0, lon:16.4, r:120},
-    {n:"Balkánský poloostrov", c:"pen", lat:42.0, lon:22.0, r:350},
-    {n:"Peloponés", c:"pen", lat:37.5, lon:22.3, r:145},
-    {n:"Jutský poloostrov", c:"pen", lat:56.2, lon:9.2, r:140},
-    {n:"Krymský poloostrov", c:"pen", lat:45.3, lon:34.1, r:165},
-    {n:"Poloostrov Kola", c:"pen", lat:67.8, lon:36.0, r:210},
-    {n:"Poloostrov Kanin", c:"pen", lat:67.5, lon:45.0, r:170},
-    {n:"Bretaňský poloostrov", c:"pen", lat:48.2, lon:-3.0, r:125},
-    {n:"Istrie", c:"pen", lat:45.2, lon:13.9, r:90},
+const TERMS = [
+ {n:"Skandinávský poloostrov",c:"pen",lat:63.2,lon:15.0,r:430},
+ {n:"Pyrenejský (Iberský) poloostrov",c:"pen",lat:40.2,lon:-4.0,r:320},
+ {n:"Apeninský poloostrov",c:"pen",lat:42.4,lon:12.6,r:260},
+ {n:"Apulie",c:"pen",lat:40.9,lon:16.7,r:125},
+ {n:"Kalábrie",c:"pen",lat:39.0,lon:16.4,r:120},
+ {n:"Balkánský poloostrov",c:"pen",lat:42.0,lon:22.0,r:350},
+ {n:"Peloponés",c:"pen",lat:37.5,lon:22.3,r:145},
+ {n:"Jutský poloostrov",c:"pen",lat:56.2,lon:9.2,r:140},
+ {n:"Krymský poloostrov",c:"pen",lat:45.3,lon:34.1,r:165},
+ {n:"Poloostrov Kola",c:"pen",lat:67.8,lon:36.0,r:210},
+ {n:"Poloostrov Kanin",c:"pen",lat:67.5,lon:45.0,r:170},
+ {n:"Bretaňský poloostrov",c:"pen",lat:48.2,lon:-3.0,r:125},
+ {n:"Istrie",c:"pen",lat:45.2,lon:13.9,r:90},
 
-    // Ostrovy a souostroví
-    {n:"Nová země", c:"isl", lat:74.0, lon:56.0, r:260},
-    {n:"Lofoty", c:"isl", lat:68.2, lon:13.8, r:115},
-    {n:"Vesterály (Vesterålen)", c:"isl", lat:68.7, lon:15.5, r:105},
-    {n:"Faerské ostrovy", c:"isl", lat:62.0, lon:-6.8, r:90},
-    {n:"Irsko", c:"isl", lat:53.4, lon:-8.0, r:180},
-    {n:"Britské ostrovy", c:"isl", lat:54.2, lon:-4.0, r:360},
-    {n:"Hebridy", c:"isl", lat:57.2, lon:-6.5, r:150},
-    {n:"Orkneje", c:"isl", lat:59.0, lon:-3.0, r:80},
-    {n:"Shetlandy", c:"isl", lat:60.3, lon:-1.2, r:90},
-    {n:"Ostrov Man", c:"isl", lat:54.23, lon:-4.55, r:60},
-    {n:"Ålandy", c:"isl", lat:60.2, lon:20.0, r:85},
-    {n:"Azory", c:"isl", lat:38.2, lon:-28.2, r:300},
-    {n:"Madeira", c:"isl", lat:32.75, lon:-16.95, r:90},
-    {n:"Baleáry", c:"isl", lat:39.4, lon:2.8, r:150},
-    {n:"Mallorca", c:"isl", lat:39.62, lon:2.90, r:70},
-    {n:"Menorca", c:"isl", lat:39.95, lon:4.10, r:60},
-    {n:"Ibiza", c:"isl", lat:38.98, lon:1.43, r:55},
-    {n:"Formentera", c:"isl", lat:38.70, lon:1.45, r:45},
-    {n:"Korsika", c:"isl", lat:42.15, lon:9.10, r:105},
-    {n:"Sardinie", c:"isl", lat:40.0, lon:9.0, r:165},
-    {n:"Liparské ostrovy", c:"isl", lat:38.55, lon:14.90, r:80},
-    {n:"Sicílie", c:"isl", lat:37.6, lon:14.0, r:165},
-    {n:"Malta", c:"isl", lat:35.90, lon:14.43, r:60},
-    {n:"Kréta", c:"isl", lat:35.2, lon:24.9, r:175},
-    {n:"Dalmatské ostrovy", c:"isl", lat:43.3, lon:16.2, r:220},
-    {n:"Rab", c:"isl", lat:44.75, lon:14.78, r:45},
-    {n:"Krk", c:"isl", lat:45.10, lon:14.60, r:50},
-    {n:"Hvar", c:"isl", lat:43.15, lon:16.70, r:55},
-    {n:"Brač", c:"isl", lat:43.32, lon:16.63, r:50},
-    {n:"Jónské ostrovy", c:"isl", lat:38.5, lon:20.6, r:170},
-    {n:"Lefkada", c:"isl", lat:38.70, lon:20.65, r:45},
-    {n:"Zakynthos", c:"isl", lat:37.78, lon:20.90, r:50},
-    {n:"Korfu", c:"isl", lat:39.62, lon:19.92, r:55},
-    {n:"Kyklady", c:"isl", lat:37.0, lon:25.0, r:180},
-    {n:"Mykonos", c:"isl", lat:37.45, lon:25.33, r:45},
-    {n:"Santorini", c:"isl", lat:36.40, lon:25.40, r:45},
-    {n:"Sporády", c:"isl", lat:39.20, lon:23.80, r:105},
-    {n:"Rhodos", c:"isl", lat:36.20, lon:28.00, r:75},
-    {n:"Kos", c:"isl", lat:36.90, lon:27.20, r:55},
+ {n:"Nová země",c:"isl",lat:74.0,lon:56.0,r:260},
+ {n:"Lofoty",c:"isl",lat:68.2,lon:13.8,r:115,micro:1},
+ {n:"Vesterály (Vesterålen)",c:"isl",lat:68.7,lon:15.5,r:105,micro:1},
+ {n:"Faerské ostrovy",c:"isl",lat:62.0,lon:-6.8,r:90,micro:1},
+ {n:"Irsko",c:"isl",lat:53.4,lon:-8.0,r:180},
+ {n:"Britské ostrovy",c:"isl",lat:54.2,lon:-4.0,r:360},
+ {n:"Hebridy",c:"isl",lat:57.2,lon:-6.5,r:150,micro:1},
+ {n:"Orkneje",c:"isl",lat:59.0,lon:-3.0,r:80,micro:1},
+ {n:"Shetlandy",c:"isl",lat:60.3,lon:-1.2,r:90,micro:1},
+ {n:"Ostrov Man",c:"isl",lat:54.23,lon:-4.55,r:60,micro:1},
+ {n:"Ålandy",c:"isl",lat:60.2,lon:20.0,r:85,micro:1},
+ {n:"Azory",c:"isl",lat:38.2,lon:-28.2,r:300,micro:1},
+ {n:"Madeira",c:"isl",lat:32.75,lon:-16.95,r:90,micro:1},
+ {n:"Baleáry",c:"isl",lat:39.4,lon:2.8,r:150,micro:1},
+ {n:"Mallorca",c:"isl",lat:39.62,lon:2.90,r:70,micro:1},
+ {n:"Menorca",c:"isl",lat:39.95,lon:4.10,r:60,micro:1},
+ {n:"Ibiza",c:"isl",lat:38.98,lon:1.43,r:55,micro:1},
+ {n:"Formentera",c:"isl",lat:38.70,lon:1.45,r:45,micro:1},
+ {n:"Korsika",c:"isl",lat:42.15,lon:9.10,r:105},
+ {n:"Sardinie",c:"isl",lat:40.0,lon:9.0,r:165},
+ {n:"Liparské ostrovy",c:"isl",lat:38.55,lon:14.90,r:80,micro:1},
+ {n:"Sicílie",c:"isl",lat:37.6,lon:14.0,r:165},
+ {n:"Malta",c:"isl",lat:35.90,lon:14.43,r:60,micro:1},
+ {n:"Kréta",c:"isl",lat:35.2,lon:24.9,r:175},
+ {n:"Dalmatské ostrovy",c:"isl",lat:43.3,lon:16.2,r:220,micro:1},
+ {n:"Rab",c:"isl",lat:44.75,lon:14.78,r:45,micro:1},
+ {n:"Krk",c:"isl",lat:45.10,lon:14.60,r:50,micro:1},
+ {n:"Hvar",c:"isl",lat:43.15,lon:16.70,r:55,micro:1},
+ {n:"Brač",c:"isl",lat:43.32,lon:16.63,r:50,micro:1},
+ {n:"Jónské ostrovy",c:"isl",lat:38.5,lon:20.6,r:170,micro:1},
+ {n:"Lefkada",c:"isl",lat:38.70,lon:20.65,r:45,micro:1},
+ {n:"Zakynthos",c:"isl",lat:37.78,lon:20.90,r:50,micro:1},
+ {n:"Korfu",c:"isl",lat:39.62,lon:19.92,r:55,micro:1},
+ {n:"Kyklady",c:"isl",lat:37.0,lon:25.0,r:180,micro:1},
+ {n:"Mykonos",c:"isl",lat:37.45,lon:25.33,r:45,micro:1},
+ {n:"Santorini",c:"isl",lat:36.40,lon:25.40,r:45,micro:1},
+ {n:"Sporády",c:"isl",lat:39.20,lon:23.80,r:105,micro:1},
+ {n:"Rhodos",c:"isl",lat:36.20,lon:28.00,r:75,micro:1},
+ {n:"Kos",c:"isl",lat:36.90,lon:27.20,r:55,micro:1},
 
-    // Moře, zálivy a průlivy
-    {n:"Středozemní moře", c:"sea", lat:36.0, lon:18.0, r:560},
-    {n:"Barentsovo moře", c:"sea", lat:73.0, lon:38.0, r:520},
-    {n:"Norské moře", c:"sea", lat:67.0, lon:1.0, r:470},
-    {n:"Bílé moře", c:"sea", lat:65.5, lon:36.7, r:230},
-    {n:"Irské moře", c:"sea", lat:53.7, lon:-5.5, r:185},
-    {n:"Severní moře", c:"sea", lat:56.0, lon:3.0, r:320},
-    {n:"Azovské moře", c:"sea", lat:46.0, lon:36.0, r:185},
-    {n:"Černé moře", c:"sea", lat:43.0, lon:34.0, r:360},
-    {n:"Marmarské moře", c:"sea", lat:40.7, lon:28.0, r:105},
-    {n:"Egejské moře", c:"sea", lat:38.5, lon:25.0, r:260},
-    {n:"Jónské moře", c:"sea", lat:38.0, lon:19.0, r:260},
-    {n:"Jaderské moře", c:"sea", lat:43.0, lon:15.0, r:260},
-    {n:"Tyrhénské moře", c:"sea", lat:40.0, lon:12.0, r:260},
-    {n:"Ligurské moře", c:"sea", lat:43.5, lon:9.2, r:165},
-    {n:"Baltské moře", c:"sea", lat:58.0, lon:20.0, r:360},
-    {n:"Botnický záliv", c:"sea", lat:63.0, lon:20.0, r:260},
-    {n:"Finský záliv", c:"sea", lat:59.7, lon:27.0, r:205},
-    {n:"Biskajský záliv", c:"sea", lat:45.5, lon:-5.0, r:310},
-    {n:"Lví záliv", c:"sea", lat:43.0, lon:5.0, r:180},
-    {n:"Gibraltarský průliv", c:"sea", lat:35.96, lon:-5.60, r:60},
-    {n:"Bospor", c:"sea", lat:41.10, lon:29.00, r:50},
-    {n:"Dardanely", c:"sea", lat:40.20, lon:26.40, r:55},
-    {n:"Lamanšský průliv", c:"sea", lat:50.50, lon:-1.50, r:155},
-    {n:"Skagerrak–Kattegat", c:"sea", lat:57.5, lon:10.5, r:180},
-    {n:"Kattegat", c:"sea", lat:56.8, lon:11.3, r:125},
-    {n:"Dánské úžiny", c:"sea", lat:55.6, lon:11.2, r:150},
-    {n:"Øresund", c:"sea", lat:55.9, lon:12.7, r:60}
+ {n:"Středozemní moře",c:"sea",lat:36.0,lon:18.0,r:560},
+ {n:"Barentsovo moře",c:"sea",lat:73.0,lon:38.0,r:520},
+ {n:"Norské moře",c:"sea",lat:67.0,lon:1.0,r:470},
+ {n:"Bílé moře",c:"sea",lat:65.5,lon:36.7,r:230},
+ {n:"Irské moře",c:"sea",lat:53.7,lon:-5.5,r:185},
+ {n:"Severní moře",c:"sea",lat:56.0,lon:3.0,r:320},
+ {n:"Azovské moře",c:"sea",lat:46.0,lon:36.0,r:185},
+ {n:"Černé moře",c:"sea",lat:43.0,lon:34.0,r:360},
+ {n:"Marmarské moře",c:"sea",lat:40.7,lon:28.0,r:105},
+ {n:"Egejské moře",c:"sea",lat:38.5,lon:25.0,r:260},
+ {n:"Jónské moře",c:"sea",lat:38.0,lon:19.0,r:260},
+ {n:"Jaderské moře",c:"sea",lat:43.0,lon:15.0,r:260},
+ {n:"Tyrhénské moře",c:"sea",lat:40.0,lon:12.0,r:260},
+ {n:"Ligurské moře",c:"sea",lat:43.5,lon:9.2,r:165},
+ {n:"Baltské moře",c:"sea",lat:58.0,lon:20.0,r:360},
+ {n:"Botnický záliv",c:"sea",lat:63.0,lon:20.0,r:260},
+ {n:"Finský záliv",c:"sea",lat:59.7,lon:27.0,r:205},
+ {n:"Biskajský záliv",c:"sea",lat:45.5,lon:-5.0,r:310},
+ {n:"Lví záliv",c:"sea",lat:43.0,lon:5.0,r:180},
+ {n:"Gibraltarský průliv",c:"sea",lat:35.96,lon:-5.60,r:60},
+ {n:"Bospor",c:"sea",lat:41.10,lon:29.00,r:50},
+ {n:"Dardanely",c:"sea",lat:40.20,lon:26.40,r:55},
+ {n:"Lamanšský průliv",c:"sea",lat:50.50,lon:-1.50,r:155},
+ {n:"Skagerrak–Kattegat",c:"sea",lat:57.5,lon:10.5,r:180},
+ {n:"Kattegat",c:"sea",lat:56.8,lon:11.3,r:125},
+ {n:"Dánské úžiny",c:"sea",lat:55.6,lon:11.2,r:150},
+ {n:"Øresund",c:"sea",lat:55.9,lon:12.7,r:60}
+];
+
+const CAT_NAMES={pen:"Poloostrovy",isl:"Ostrovy a souostroví",sea:"Moře, zálivy a průlivy"};
+const EUROPE_BOX={type:"Polygon",coordinates:[[[-32,28],[65,28],[65,81],[-32,81],[-32,28]]]};
+
+const svg=d3.select("#mapSvg");
+const base=svg.append("g");
+const answerLayer=base.append("g");
+let countriesFeature=null, bordersFeature=null;
+let projection=d3.geoMercator();
+let path=d3.geoPath(projection);
+let currentTransform=d3.zoomIdentity;
+let ready=false, queue=[], index=-1, correct=0, locked=true;
+
+const qEl=document.getElementById("question");
+const catEl=document.getElementById("category");
+const progEl=document.getElementById("progress");
+const scoreEl=document.getElementById("score");
+const feedbackEl=document.getElementById("feedback");
+const nextBtn=document.getElementById("nextBtn");
+const loading=document.getElementById("loading");
+
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371.0088, rad=Math.PI/180;
+  const p1=lat1*rad,p2=lat2*rad,dp=(lat2-lat1)*rad,dl=(lon2-lon1)*rad;
+  const a=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function fmtKm(k){return k<10?k.toFixed(1).replace(".",",")+" km":Math.round(k).toLocaleString("cs-CZ")+" km"}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function setFeedback(kind,text){feedbackEl.className="feedback "+kind;feedbackEl.textContent=text}
+function clearFeedback(){feedbackEl.className="feedback";feedbackEl.textContent=""}
+function clearAnswer(){answerLayer.selectAll("*").remove()}
+
+function sizeMap(){
+  if(!countriesFeature)return;
+  const el=document.getElementById("mapWrap");
+  const w=Math.max(320,el.clientWidth),h=Math.max(320,el.clientHeight);
+  svg.attr("viewBox",`0 0 ${w} ${h}`);
+  projection=d3.geoMercator().fitExtent([[14,14],[w-14,h-14]],EUROPE_BOX);
+  path=d3.geoPath(projection);
+  drawBase();
+  clearAnswer();
+  if(index>=0 && index<queue.length && locked) {
+    // Po změně velikosti během zobrazené odpovědi ji pouze znovu nezakreslujeme.
+    // Další otázka se zobrazí normálně.
+  }
+}
+
+function drawBase(){
+  base.selectAll(".map-base").remove();
+  const mapBase=base.insert("g",":first-child").attr("class","map-base");
+  mapBase.selectAll("path.country")
+    .data(countriesFeature.features)
+    .join("path").attr("class","country").attr("d",path);
+  mapBase.append("path").datum(countriesFeature).attr("class","coast").attr("d",path);
+  mapBase.append("path").datum(bordersFeature).attr("class","borders").attr("d",path);
+
+  // Drobné ostrovy, které se v mapě 1:50m mohou ztratit, dostanou nenápadnou značku bez názvu.
+  const pts=TERMS.filter(t=>t.micro).map(t=>({lon:t.lon,lat:t.lat}));
+  mapBase.selectAll("circle.micro-island").data(pts).join("circle")
+    .attr("class","micro-island")
+    .attr("cx",d=>projection([d.lon,d.lat])[0])
+    .attr("cy",d=>projection([d.lon,d.lat])[1])
+    .attr("r",2.0);
+
+  mapBase.lower();
+}
+
+const zoom=d3.zoom()
+  .scaleExtent([1,7])
+  .filter(e => !locked || e.type==="wheel" || e.type==="mousedown" || e.type==="touchstart")
+  .on("zoom",e=>{
+    currentTransform=e.transform;
+    base.attr("transform",currentTransform);
+  });
+svg.call(zoom).on("dblclick.zoom",null);
+
+function resetView(animated=true){
+  svg.transition().duration(animated?250:0).call(zoom.transform,d3.zoomIdentity);
+}
+document.getElementById("zoomIn").onclick=()=>svg.transition().duration(160).call(zoom.scaleBy,1.45);
+document.getElementById("zoomOut").onclick=()=>svg.transition().duration(160).call(zoom.scaleBy,1/1.45);
+document.getElementById("resetView").onclick=()=>resetView();
+
+function selectedCats(){
+  const a=[];
+  if(document.getElementById("catPen").checked)a.push("pen");
+  if(document.getElementById("catIsl").checked)a.push("isl");
+  if(document.getElementById("catSea").checked)a.push("sea");
+  return a;
+}
+function startGame(){
+  if(!ready)return;
+  const cats=selectedCats();
+  if(!cats.length){alert("Vyber alespoň jednu skupinu pojmů.");return}
+  const pool=TERMS.filter(t=>cats.includes(t.c));
+  const raw=document.getElementById("count").value;
+  const amount=raw==="all"?pool.length:Math.min(+raw,pool.length);
+  queue=shuffle(pool).slice(0,amount);
+  index=-1;correct=0;locked=true;
+  scoreEl.textContent="Správně: 0";
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("endScreen").classList.add("hidden");
+  resetView(false);
+  showQuestion();
+}
+function showQuestion(){
+  clearAnswer();clearFeedback();resetView();
+  index++;
+  if(index>=queue.length){finish();return}
+  locked=false;nextBtn.disabled=true;
+  const t=queue[index];
+  qEl.textContent=t.n;catEl.textContent=CAT_NAMES[t.c];
+  progEl.textContent=`${index+1} / ${queue.length}`;
+  scoreEl.textContent=`Správně: ${correct}`;
+}
+function reveal(t,guess,dist,ok){
+  const area=d3.geoCircle().center([t.lon,t.lat]).radius(t.r/111.195)();
+  answerLayer.append("path").datum(area).attr("class","answer-area").attr("d",path);
+
+  const [ax,ay]=projection([t.lon,t.lat]);
+  const [gx,gy]=projection([guess.lon,guess.lat]);
+  answerLayer.append("line")
+    .attr("class","answer-line"+(ok?" ok":""))
+    .attr("x1",gx).attr("y1",gy).attr("x2",ax).attr("y2",ay);
+  answerLayer.append("circle").attr("class","guess-dot").attr("cx",gx).attr("cy",gy).attr("r",7);
+  answerLayer.append("circle").attr("class","answer-dot").attr("cx",ax).attr("cy",ay).attr("r",8);
+  answerLayer.append("text").attr("class","answer-label").attr("x",ax+11).attr("y",ay-11).text(t.n);
+
+  if(ok)setFeedback("good",`Správně. Od cílového bodu jsi byl(a) ${fmtKm(dist)}.`);
+  else setFeedback("bad",`Vedle o ${fmtKm(dist)}. Zeleně je označená správná poloha.`);
+}
+
+svg.on("click",event=>{
+  if(!ready||locked||index<0||index>=queue.length||event.defaultPrevented)return;
+  const pointer=d3.pointer(event,svg.node());
+  const p=currentTransform.invert(pointer);
+  const ll=projection.invert(p);
+  if(!ll)return;
+  const [lon,lat]=ll;
+  if(lat<25||lat>84||lon<-38||lon>72)return;
+
+  const t=queue[index],dist=haversine(lat,lon,t.lat,t.lon),ok=dist<=t.r;
+  locked=true;if(ok)correct++;
+  scoreEl.textContent=`Správně: ${correct}`;
+  reveal(t,{lat,lon},dist,ok);
+  nextBtn.disabled=false;
+});
+
+nextBtn.onclick=showQuestion;
+document.getElementById("startBtn").onclick=startGame;
+document.getElementById("againBtn").onclick=()=>{
+  document.getElementById("endScreen").classList.add("hidden");startGame()
+};
+document.getElementById("settingsBtn").onclick=()=>{
+  document.getElementById("endScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+  qEl.textContent="Vyber nastavení a spusť hru";catEl.textContent="";
+  progEl.textContent="0 / 0";scoreEl.textContent="Správně: 0";clearFeedback();clearAnswer();resetView();
+};
+function finish(){
+  locked=true;nextBtn.disabled=true;clearAnswer();
+  const pct=queue.length?Math.round(correct/queue.length*100):0;
+  document.getElementById("finalScore").textContent=`${correct} / ${queue.length}`;
+  document.getElementById("finalText").textContent=`Úspěšnost ${pct} %.`;
+  document.getElementById("endScreen").classList.remove("hidden");
+}
+window.addEventListener("resize",()=>{clearTimeout(window.__rt);window.__rt=setTimeout(sizeMap,100)});
+
+async function getWorld(){
+  const urls=[
+    "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json",
+    "https://unpkg.com/world-atlas@2/countries-50m.json"
   ];
-
-  const CAT_NAMES = {
-    pen:"Poloostrovy",
-    isl:"Ostrovy a souostroví",
-    sea:"Moře, zálivy a průlivy"
-  };
-
-  const europeBounds = L.latLngBounds([[27.0,-33.0],[81.5,65.0]]);
-  const map = L.map("map", {
-    zoomControl:true,
-    attributionControl:true,
-    minZoom:3,
-    maxZoom:8,
-    maxBounds:europeBounds.pad(0.15),
-    maxBoundsViscosity:0.8
-  });
-
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", {
-    subdomains:"abcd",
-    maxZoom:19,
-    attribution:'&copy; OpenStreetMap contributors &copy; CARTO'
-  }).addTo(map);
-
-  map.fitBounds(europeBounds, {padding:[10,10]});
-
-  const qEl = document.getElementById("question");
-  const catEl = document.getElementById("category");
-  const progEl = document.getElementById("progress");
-  const scoreEl = document.getElementById("score");
-  const feedbackEl = document.getElementById("feedback");
-  const nextBtn = document.getElementById("nextBtn");
-  const startScreen = document.getElementById("startScreen");
-  const endBox = document.getElementById("endBox");
-  const finalScore = document.getElementById("finalScore");
-  const finalText = document.getElementById("finalText");
-
-  let queue = [];
-  let index = -1;
-  let correct = 0;
-  let locked = true;
-  let overlays = [];
-
-  function shuffle(a){
-    const arr = [...a];
-    for(let i=arr.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [arr[i],arr[j]]=[arr[j],arr[i]];
-    }
-    return arr;
+  let lastErr;
+  for(const url of urls){
+    try{
+      const r=await fetch(url,{mode:"cors"});
+      if(!r.ok)throw new Error("HTTP "+r.status);
+      return await r.json();
+    }catch(e){lastErr=e}
   }
+  throw lastErr||new Error("Mapová data se nepodařilo stáhnout.");
+}
 
-  function fmtKm(km){
-    if(km < 10) return km.toFixed(1).replace(".",",") + " km";
-    return Math.round(km).toLocaleString("cs-CZ") + " km";
+async function init(){
+  try{
+    if(!window.d3||!window.topojson)throw new Error("Nepodařilo se načíst knihovnu mapy.");
+    const world=await getWorld();
+    countriesFeature=topojson.feature(world,world.objects.countries);
+    bordersFeature=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
+    sizeMap();
+    ready=true;locked=true;
+    loading.style.display="none";
+    document.getElementById("startBtn").disabled=false;
+    qEl.textContent="Vyber nastavení a spusť hru";
+  }catch(e){
+    console.error(e);
+    loading.className="loading error";
+    loading.innerHTML="Mapu se nepodařilo načíst.<br>Zkontroluj připojení k internetu a stránku obnov.";
+    qEl.textContent="Mapa se nenačetla";
   }
-
-  function clearOverlays(){
-    overlays.forEach(x => map.removeLayer(x));
-    overlays = [];
-  }
-
-  function divIcon(cls){
-    return L.divIcon({className:"", html:`<div class="${cls}"></div>`, iconSize:[18,18], iconAnchor:[9,9]});
-  }
-
-  function setFeedback(kind, text){
-    feedbackEl.className = "feedback " + kind;
-    feedbackEl.textContent = text;
-  }
-
-  function resetFeedback(){
-    feedbackEl.className = "feedback";
-    feedbackEl.textContent = "";
-  }
-
-  function showQuestion(){
-    clearOverlays();
-    resetFeedback();
-    locked = false;
-    nextBtn.disabled = true;
-    index++;
-
-    if(index >= queue.length){
-      finish();
-      return;
-    }
-
-    const t = queue[index];
-    qEl.textContent = t.n;
-    catEl.textContent = CAT_NAMES[t.c];
-    progEl.textContent = `${index+1} / ${queue.length}`;
-    scoreEl.textContent = `Správně: ${correct}`;
-    map.fitBounds(europeBounds, {padding:[10,10], animate:false});
-  }
-
-  function reveal(t, guessedLatLng, distKm, wasCorrect, skipped=false){
-    const target = L.latLng(t.lat,t.lon);
-
-    const circle = L.circle(target, {
-      radius:t.r*1000,
-      color:wasCorrect ? "#16794a" : "#98a2b3",
-      weight:2,
-      fillColor:wasCorrect ? "#16794a" : "#98a2b3",
-      fillOpacity:0.08,
-      dashArray:"5 5"
-    }).addTo(map);
-    overlays.push(circle);
-
-    const ans = L.marker(target, {icon:divIcon("answer-dot")}).addTo(map).bindTooltip(t.n, {
-      permanent:true, direction:"top", offset:[0,-8]
-    });
-    overlays.push(ans);
-
-    if(guessedLatLng){
-      const guess = L.marker(guessedLatLng, {icon:divIcon("guess-dot")}).addTo(map);
-      overlays.push(guess);
-
-      const line = L.polyline([guessedLatLng,target], {
-        color:wasCorrect ? "#16794a" : "#b42318",
-        weight:3,
-        opacity:0.85
-      }).addTo(map);
-      overlays.push(line);
-
-      map.fitBounds(L.latLngBounds([guessedLatLng,target]).pad(0.35), {maxZoom:6, padding:[35,35]});
-    } else {
-      map.setView(target, Math.min(6, map.getZoom()+1), {animate:true});
-    }
-
-    if(skipped){
-      setFeedback("neutral", `Správná poloha je označená zeleně.`);
-    } else if(wasCorrect){
-      setFeedback("good", `Správně. Od cílového bodu jsi byl(a) ${fmtKm(distKm)}.`);
-    } else {
-      setFeedback("bad", `Vedle o ${fmtKm(distKm)}. Správná poloha je označená zeleně.`);
-    }
-  }
-
-  map.on("click", e => {
-    if(locked || index < 0 || index >= queue.length) return;
-    locked = true;
-    const t = queue[index];
-    const target = L.latLng(t.lat,t.lon);
-    const distKm = e.latlng.distanceTo(target)/1000;
-    const ok = distKm <= t.r;
-
-    if(ok) correct++;
-    scoreEl.textContent = `Správně: ${correct}`;
-    reveal(t, e.latlng, distKm, ok, false);
-    nextBtn.disabled = false;
-  });
-
-  nextBtn.addEventListener("click", showQuestion);
-
-  function selectedCategories(){
-    const cats = [];
-    if(document.getElementById("catPen").checked) cats.push("pen");
-    if(document.getElementById("catIsl").checked) cats.push("isl");
-    if(document.getElementById("catSea").checked) cats.push("sea");
-    return cats;
-  }
-
-  function startGame(){
-    const cats = selectedCategories();
-    if(!cats.length){
-      alert("Vyber alespoň jednu skupinu pojmů.");
-      return;
-    }
-    const pool = TERMS.filter(t => cats.includes(t.c));
-    const raw = document.getElementById("count").value;
-    const amount = raw === "all" ? pool.length : Math.min(Number(raw), pool.length);
-
-    queue = shuffle(pool).slice(0,amount);
-    index = -1;
-    correct = 0;
-    scoreEl.textContent = "Správně: 0";
-    startScreen.style.display = "none";
-    endBox.classList.remove("show");
-    showQuestion();
-  }
-
-  function finish(){
-    locked = true;
-    nextBtn.disabled = true;
-    clearOverlays();
-    const pct = queue.length ? Math.round(correct/queue.length*100) : 0;
-    finalScore.textContent = `${correct} / ${queue.length}`;
-    finalText.textContent = `Úspěšnost ${pct} %.`;
-    endBox.classList.add("show");
-  }
-
-  document.getElementById("startBtn").addEventListener("click", startGame);
-  document.getElementById("againBtn").addEventListener("click", () => {
-    endBox.classList.remove("show");
-    startGame();
-  });
-  document.getElementById("settingsBtn").addEventListener("click", () => {
-    endBox.classList.remove("show");
-    startScreen.style.display = "grid";
-    qEl.textContent = "Vyber nastavení a spusť hru";
-    catEl.textContent = "";
-    progEl.textContent = "0 / 0";
-    scoreEl.textContent = "Správně: 0";
-    resetFeedback();
-    clearOverlays();
-    map.fitBounds(europeBounds, {padding:[10,10], animate:false});
-  });
-
-  // Po změně rozměru displeje Leaflet někdy potřebuje přepočítat mapu.
-  window.addEventListener("resize", () => map.invalidateSize());
+}
+init();
 })();
 </script>
 </body>
