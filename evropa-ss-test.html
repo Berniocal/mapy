@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1728">
+<title>Evropa · GeoLab SŠ — testovací mapa</title>
+<style>
+:root { color-scheme:dark; --bg:#0c1422; --surface:#111d30; --surface2:#17253a; --line:#2a3a50; --text:#eef5ff; --muted:#9eb0c7; --a:#48bcdd; --good:#5cddab; --bad:#ff827e; --sea:#122c47; --land:#233d56; --stroke:#536a82; --shad:0 20px 55px #040b1c77; }
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+.app{height:100dvh;min-height:450px;display:grid;grid-template-rows:67px minmax(0,1fr);overflow:hidden}
+.top{display:flex;align-items:center;justify-content:space-between;padding:8px 19px;border-bottom:1px solid var(--line);background:#0d1728;gap:12px;z-index:15}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}.mark{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#52cbe4,#3264b3);font-size:23px;color:white}.brand h1{font-size:18px;letter-spacing:-.5px;line-height:1.1;margin:0}.brand small{font-size:11px;color:var(--muted)}.pill{font-size:11px;color:#bcd3e6;background:#213448;border:1px solid #33536b;padding:5px 9px;border-radius:999px;font-weight:700}
+.topright{display:flex;gap:10px;align-items:center}.scoretop{font-size:13px;color:var(--muted);white-space:nowrap}.scoretop b{font-size:16px;color:var(--text)}
+.iconbtn,.secondary,.primary{border:1px solid var(--line);border-radius:11px;color:var(--text);background:var(--surface2);min-height:38px;padding:9px 12px;font-weight:700}.iconbtn{width:40px;padding:6px;font-size:19px}.primary{background:linear-gradient(130deg,#1698d0,#3475ca);border-color:#389fe1;color:#fff}.secondary:hover,.iconbtn:hover{border-color:#72bde4}.primary:hover{filter:brightness(1.12)}
+.workspace{display:grid;grid-template-columns:312px minmax(0,1fr);min-height:0;position:relative}.scrim{display:none;position:absolute;inset:0;z-index:14;background:#0009}.sidebar{min-height:0;overflow-y:auto;overflow-x:hidden;background:var(--surface);border-right:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:17px;z-index:12}.aside-head{display:flex;align-items:center;justify-content:space-between}.aside-head h2{font-size:17px;margin:0}.section-label{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#91adc5;margin:0 0 9px}.switchbar{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#0b1627;padding:4px;border-radius:12px}.switchbar button{border:0;background:transparent;color:var(--muted);border-radius:9px;min-height:39px;font-weight:750}.switchbar button.active{background:#25445d;color:#e8f9ff;box-shadow:0 2px 10px #0005}.levels{display:flex;gap:6px}.levels button{flex:1;min-height:34px;padding:6px;border:1px solid #32465e;border-radius:9px;color:#aebfd2;background:#152237;font-size:12px;font-weight:700}.levels button.active{background:#204f65;border-color:#51bddd;color:#d7fbff}
+.catlist{display:grid;gap:6px}.cat{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #26384e;border-radius:11px;padding:9px;background:#16243a;cursor:pointer;font-size:13px;font-weight:650;user-select:none}.cat:has(input:checked){border-color:#397c9a;background:#18364a}.cat-left{display:flex;align-items:center;gap:9px}.cat input{width:16px;height:16px;margin:0;accent-color:var(--a)}.cat .emoji{font-size:17px}.cat .count{color:#92a8c0;font-size:12px}.cat:has(input:checked) .count{color:#9ae4f2}.smalltools{display:flex;justify-content:space-between;gap:6px}.linkbtn{border:none;background:transparent;color:#7bcceb;font-size:12px;padding:3px 0;font-weight:700}.linkbtn:hover{text-decoration:underline}.settingsrow{display:grid;grid-template-columns:1fr 105px;gap:9px;align-items:center;font-size:13px;color:#b4c6d9}.settingsrow select{min-height:36px;background:#172941;color:#e5f3ff;border:1px solid #334963;border-radius:10px;padding:4px}.start{width:100%;min-height:47px;font-size:15px}.helper{font-size:12px;line-height:1.55;color:#92aac4;margin:0}.hint-card{background:#172a3c;border:1px solid #274153;border-radius:12px;padding:12px;color:#b5cadf;font-size:12px;line-height:1.55}.history{display:grid;gap:4px}.history button{padding:7px 9px;border:1px solid transparent;border-radius:7px;color:#b9c8da;background:#17243a;text-align:left;font-size:12px;display:flex;justify-content:space-between;gap:6px}.history button:hover{border-color:#456780}.history .yes{color:var(--good)}.history .no{color:var(--bad)}
+.mapbox{min-height:0;position:relative;background:var(--sea);overflow:hidden;touch-action:none}#map{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none;user-select:none}.gridline{fill:none;stroke:#40708b;stroke-width:.55;opacity:.31;pointer-events:none}.country{fill:var(--land);stroke:#4a637c;stroke-width:.75;vector-effect:non-scaling-stroke;transition:fill .12s}.country:hover{fill:#325876}.country.correct-country{fill:#247560;stroke:#7be5b3;stroke-width:1.8}.water{fill:var(--sea)}.geo-line{stroke:var(--good);fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;pointer-events:none}.spot{fill:#58deb2;stroke:#e5fff8;stroke-width:1.5;pointer-events:none}.guessed{fill:#ff796e;stroke:white;stroke-width:2;pointer-events:none}.pointerline{stroke:#ff968c;stroke-width:2;stroke-dasharray:5 4;pointer-events:none}.targetring{fill:#54cfa533;stroke:#60e4b7;stroke-width:1.4;stroke-dasharray:4 4;pointer-events:none}.labelbg{fill:#0c1d2e;stroke:#2f6676;stroke-width:1}.pinlabel{fill:#e8fff7;font:700 12px system-ui,sans-serif;pointer-events:none}
+.question-card{position:absolute;left:18px;top:18px;width:min(430px,calc(100% - 95px));z-index:5;background:#0d1b2cea;backdrop-filter:blur(12px);border:1px solid #426078;border-radius:18px;box-shadow:var(--shad);padding:17px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1.05px;color:#82cadd;font-weight:850;display:flex;align-items:center;gap:8px}.question-card h2{font-size:clamp(20px,2.1vw,26px);line-height:1.23;margin:9px 0 12px;letter-spacing:-.45px}.qbottom{display:flex;align-items:center;justify-content:space-between;gap:10px}.progress{font-size:12px;color:#9fc0d5;font-weight:700}.qactions{display:flex;gap:6px}.qactions button{min-height:35px;padding:7px 11px;font-size:12px}.feedback{font-size:12px;line-height:1.5;padding:10px 12px;border-radius:11px;margin-bottom:11px;display:none}.feedback.on{display:block}.feedback.ok{background:#123e35;border:1px solid #2b8c72;color:#b5f9d9}.feedback.wrong{background:#4a262a;border:1px solid #99545e;color:#ffd1c9}.feedback.info{background:#17344e;border:1px solid #33739d;color:#d5f3ff}.inline-note{font-size:11px;color:#9eb9ce;line-height:1.3;margin:0 0 9px}
+.maptools{position:absolute;right:17px;top:18px;z-index:6;display:grid;gap:8px}.maptools button{background:#0d1c2be8;border:1px solid #40607a;box-shadow:0 4px 18px #0006;color:#e8f9ff;border-radius:12px;min-width:43px;height:43px;font-size:21px;font-weight:650}.maptools button:hover{background:#24415b}.mapcredit{position:absolute;right:12px;bottom:10px;color:#a7c2d3;font-size:10px;background:#0c1b2bb7;padding:5px 8px;border-radius:7px;pointer-events:none}.bottom-note{position:absolute;bottom:17px;left:18px;font-size:12px;color:#a9c4d8;background:#10273bcf;border:1px solid #32526c;border-radius:11px;padding:8px 11px;max-width:60%;pointer-events:none}
+.loading{position:absolute;inset:0;background:#102338ef;z-index:11;display:grid;place-items:center;text-align:center;padding:25px;color:#c6e9f6;font-weight:750;line-height:1.7}.loading.hidden{display:none}
+.endoverlay{position:absolute;inset:0;background:#091321df;backdrop-filter:blur(9px);z-index:12;display:grid;place-items:center;padding:18px}.endoverlay.hidden{display:none}.endpanel{max-width:460px;width:100%;background:#14263c;border:1px solid #385a76;border-radius:21px;padding:30px;text-align:center;box-shadow:var(--shad)}.endpanel h2{font-size:26px;margin:6px 0}.endpanel .big{font-size:62px;font-weight:850;letter-spacing:-3px;color:#68d7e6}.endpanel p{color:#bacfe1;line-height:1.5}.endpanel .buttons{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.search{width:100%;height:39px;background:#0c192a;border:1px solid #32485f;border-radius:9px;padding:0 11px;color:var(--text);outline:0}.explorelist{display:grid;gap:4px;max-height:36vh;overflow-y:auto;padding-right:4px}.explorelist button{display:flex;align-items:center;justify-content:space-between;text-align:left;font-size:12px;min-height:34px;padding:7px 9px;background:#15273b;border:1px solid #29405a;border-radius:8px;color:#c9dcf0}.explorelist button:hover{background:#24506a}.explorelist small{color:#71bfe1;font-size:11px}.exploreinfo{font-size:12px;color:#a9d3e7;line-height:1.5}.drawer-toggle,.drawer-close{display:none}
+@media(max-width:900px){.workspace{grid-template-columns:270px minmax(0,1fr)}.sidebar{padding:13px}.question-card{left:10px;top:10px;width:min(385px,calc(100% - 75px));padding:12px}.maptools{right:9px;top:10px}.bottom-note{left:10px;bottom:10px;font-size:11px}}
+@media(max-width:670px){.app{grid-template-rows:56px minmax(0,1fr)}.top{padding:7px 10px}.brand h1{font-size:15px}.brand small{display:none}.mark{width:34px;height:34px;font-size:19px}.pill{display:none}.scoretop{font-size:10px}.scoretop b{font-size:12px}.drawer-toggle,.drawer-close{display:block}.workspace{display:block}.sidebar{position:absolute;left:0;top:0;bottom:0;width:min(320px,88vw);box-shadow:20px 0 55px #000a;transform:translateX(-110%);transition:transform .2s;z-index:16}.sidebar.show{transform:translateX(0)}.scrim{position:absolute;inset:0;background:#0009;z-index:14;display:none}.scrim.show{display:block}.mapbox{height:100%;width:100%}.question-card{left:8px;top:8px;width:calc(100% - 66px);padding:11px;border-radius:13px}.question-card h2{font-size:18px;margin:7px 0 10px}.eyebrow{font-size:10px}.qactions button{min-height:32px;font-size:11px;padding:6px 8px}.progress{font-size:10px}.maptools{top:8px;right:7px;gap:6px}.maptools button{min-width:40px;height:40px}.bottom-note{bottom:28px;left:8px;max-width:75%;font-size:10px;padding:6px 8px}.mapcredit{font-size:9px;bottom:5px;right:7px}.endpanel{padding:20px}}
+@media(max-width:350px){.brand h1{font-size:13px}.question-card h2{font-size:16px}.qactions button{padding:5px}.scoretop{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+ <div class="brand"><button class="iconbtn drawer-toggle" id="openMenu" aria-label="Otevřít nastavení">☰</button><div class="mark">◎</div><div><h1>GeoLab <span style="color:#68cde5">Evropa</span></h1><small>Slepá mapa · středoškolská geografie</small></div><span class="pill">TESTOVACÍ VERZE</span></div>
+ <div class="topright"><span class="scoretop">Body <b id="scoreTop">0 / 0</b></span><button class="secondary" id="homeBtn">↺ Nový test</button></div>
+</header>
+<div class="workspace">
+<div class="scrim" id="scrim"></div>
+<aside class="sidebar" id="sidebar">
+ <div class="aside-head"><h2>Ovládání mapy</h2><button class="iconbtn drawer-close" id="closeMenu" aria-label="Zavřít nastavení">×</button></div>
+ <div><div class="switchbar"><button class="active" data-mode="quiz">🎯 Procvičování</button><button data-mode="learn">◉ Prohlížení</button></div></div>
+ <div id="quizSettings"><p class="section-label">Obtížnost</p><div class="levels"><button class="active" data-level="basic">Základ SŠ</button><button data-level="advanced">Rozšířená SŠ</button></div></div>
+ <div><div style="display:flex;justify-content:space-between;align-items:center"><p class="section-label">Tematické okruhy</p><div class="smalltools"><button class="linkbtn" id="allCats">Vše</button><button class="linkbtn" id="noCats">Nic</button></div></div><div class="catlist" id="catList"></div></div>
+ <div id="quizOptions"><div class="settingsrow"><label for="qcount">Počet otázek</label><select id="qcount"><option value="10">10</option><option value="20" selected>20</option><option value="30">30</option><option value="50">50</option><option value="all">Všechny</option></select></div><div style="height:10px"></div><button class="primary start" id="startBtn">▶ Spustit test</button><p class="helper" style="margin-top:9px">Klikni do mapy. Státy se hodnotí podle hranic, ostatní místa podle odpovídající oblasti; řeky a pohoří podle části jejich průběhu.</p></div>
+ <div id="learnOptions" hidden><p class="section-label">Vyhledat pojem</p><input class="search" id="searchTerm" placeholder="Hledat název…" aria-label="Hledat zeměpisný pojem"><p class="exploreinfo" id="exploreCount"></p><div class="explorelist" id="exploreList"></div></div>
+ <div id="historyBox" hidden><p class="section-label">Historie odpovědí</p><div class="history" id="history"></div></div>
+ <div class="hint-card">💡 <b>Tip:</b> Na telefonu přibližuj dvěma prsty. Po každé otázce zůstává přiblížení zachované. Tlačítko ⌂ vrátí pohled na celou Evropu.</div>
+</aside>
+<main class="mapbox" id="mapbox">
+ <svg id="map" role="img" aria-label="Interaktivní slepá mapa Evropy"></svg>
+ <section class="question-card" id="questionCard" aria-live="polite"><div class="eyebrow"><span id="qcategory">PŘIPRAVENO K TESTOVÁNÍ</span></div><h2 id="qtitle">Vyber okruhy a spusť test</h2><p class="inline-note" id="qhint">Nebo přepni na Prohlížení a prozkoumávej pojmy.</p><div class="feedback" id="feedback"></div><div class="qbottom"><span class="progress" id="qprogress">10 okruhů zeměpisu</span><div class="qactions"><button class="secondary" id="prevBtn" disabled>← Zpět</button><button class="primary" id="nextBtn" disabled>Další →</button></div></div></section>
+ <div class="maptools"><button id="zoomIn" title="Přiblížit" aria-label="Přiblížit">+</button><button id="zoomOut" title="Oddálit" aria-label="Oddálit">−</button><button id="zoomHome" title="Celá Evropa" aria-label="Celá Evropa">⌂</button></div>
+ <div class="bottom-note" id="mapHint">Můžeš přibližovat a posouvat mapu.</div><div class="mapcredit">Natural Earth · world-atlas 50m · bez API klíče</div>
+ <div class="loading" id="loading">Načítám vektorovou mapu Evropy…</div>
+ <div class="endoverlay hidden" id="endOverlay"><div class="endpanel"><div style="font-size:38px">🏁</div><h2>Test dokončen</h2><div class="big" id="endScore">0 %</div><p id="endText"></p><div class="buttons"><button class="primary" id="repeatBtn">Zkusit znovu</button><button class="secondary" id="changeBtn">Změnit nastavení</button></div></div></div>
+</main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), R=Math.PI/180;
+const CATS={country:['🗺️','Státy'],capital:['🏛️','Hlavní města'],river:['〰️','Řeky'],mountain:['⛰️','Pohoří'],sea:['🌊','Moře'],gulf:['🌀','Zálivy'],peninsula:['🧭','Poloostrovy'],island:['🏝️','Ostrovy a souostroví'],strait:['↔️','Průlivy a úžiny'],lake:['💧','Jezera']};
+const TERMS=[];
+function add(n,c,lat,lon,r=90,level=1,extra={}){TERMS.push({id:'t'+TERMS.length,n,c,lat,lon,r,level,...extra});}
+function country(n,iso,lat,lon,capital,clat,clon,level=1){add(n,'country',lat,lon,90,level,{iso,capital});add(capital,'capital',clat,clon,38,level,{state:n});}
+// ISO 3166-1 numeric identifiers correspond to Natural Earth / world-atlas TopoJSON country identifiers.
+country('Albánie',8,41.1,20.0,'Tirana',41.33,19.82,2);
+country('Andorra',20,42.54,1.57,'Andorra la Vella',42.51,1.52,2);
+country('Rakousko',40,47.7,13.3,'Vídeň',48.21,16.37);
+country('Belgie',56,50.7,4.6,'Brusel',50.85,4.35);
+country('Bosna a Hercegovina',70,44.2,17.7,'Sarajevo',43.86,18.41,2);
+country('Bulharsko',100,42.7,25.4,'Sofie',42.70,23.32);
+country('Bělorusko',112,53.5,28.0,'Minsk',53.90,27.56);
+country('Chorvatsko',191,45.2,16.3,'Záhřeb',45.81,15.98);
+country('Kypr',196,35.06,33.2,'Nikósie',35.17,33.37,2);
+country('Česko',203,49.82,15.50,'Praha',50.08,14.42);
+country('Dánsko',208,56.0,10.0,'Kodaň',55.68,12.57);
+country('Estonsko',233,58.6,25.1,'Tallinn',59.44,24.75);
+country('Finsko',246,64.3,26.0,'Helsinky',60.17,24.94);
+country('Francie',250,46.8,2.4,'Paříž',48.86,2.35);
+country('Německo',276,51.1,10.3,'Berlín',52.52,13.41);
+country('Řecko',300,39.1,23.6,'Atény',37.98,23.73);
+country('Maďarsko',348,47.2,19.5,'Budapešť',47.50,19.04);
+country('Island',352,64.9,-18.6,'Reykjavík',64.15,-21.94);
+country('Irsko',372,53.2,-8.2,'Dublin',53.35,-6.26);
+country('Itálie',380,42.8,12.6,'Řím',41.90,12.50);
+country('Lotyšsko',428,56.9,24.5,'Riga',56.95,24.11);
+country('Lichtenštejnsko',438,47.16,9.55,'Vaduz',47.14,9.52,2);
+country('Litva',440,55.2,24.0,'Vilnius',54.69,25.28);
+country('Lucembursko',442,49.8,6.1,'Lucemburk',49.61,6.13,2);
+country('Malta',470,35.92,14.42,'Valletta',35.90,14.51,2);
+country('Moldavsko',498,47.1,28.5,'Kišiněv',47.01,28.86,2);
+country('Černá Hora',499,42.7,19.2,'Podgorica',42.44,19.26,2);
+country('Nizozemsko',528,52.2,5.3,'Amsterdam',52.37,4.90);
+country('Norsko',578,62.1,9.3,'Oslo',59.91,10.75);
+country('Polsko',616,52.1,19.1,'Varšava',52.23,21.01);
+country('Portugalsko',620,39.8,-8.0,'Lisabon',38.72,-9.14);
+country('Rumunsko',642,45.9,24.9,'Bukurešť',44.43,26.10);
+country('Rusko',643,56.2,39.4,'Moskva',55.75,37.62);
+country('Srbsko',688,44.0,20.9,'Bělehrad',44.81,20.46);
+country('Slovensko',703,48.7,19.5,'Bratislava',48.15,17.11);
+country('Slovinsko',705,46.1,14.9,'Lublaň',46.05,14.51,2);
+country('Španělsko',724,40.1,-3.8,'Madrid',40.42,-3.70);
+country('Švédsko',752,63.0,16.3,'Stockholm',59.33,18.07);
+country('Švýcarsko',756,46.8,8.2,'Bern',46.95,7.45);
+country('Turecko',792,40.3,29.1,'Ankara',39.93,32.86,2);
+country('Ukrajina',804,49.0,31.0,'Kyjev',50.45,30.52);
+country('Severní Makedonie',807,41.6,21.7,'Skopje',42.00,21.43,2);
+country('Spojené království',826,53.9,-2.4,'Londýn',51.51,-0.13);
+// Tiny countries lacking meaningful polygons in some Natural Earth resolutions are evaluated by proximity.
+add('Monako','country',43.74,7.42,14,2,{iso:492,capital:'Monako'});add('Monako','capital',43.74,7.42,16,2,{state:'Monako'});
+add('San Marino','country',43.94,12.45,15,2,{iso:674,capital:'San Marino'});add('San Marino','capital',43.94,12.45,16,2,{state:'San Marino'});
+add('Vatikán','country',41.90,12.45,12,2,{iso:336,capital:'Vatikán'});add('Vatikán','capital',41.90,12.45,14,2,{state:'Vatikán'});
+// Points and areas: radius is pedagogical tolerance in km, not a legal geographic border.
+[
+['Severní moře',56,3,330],['Baltské moře',57.4,19.4,300],['Norské moře',66,1.5,410],['Barentsovo moře',73,34,420,2],['Bílé moře',65.7,36.8,170,2],['Irské moře',53.8,-5.2,130,2],['Středozemní moře',36.2,18.5,530],['Černé moře',43.2,34,310],['Azovské moře',46,36,135,2],['Jaderské moře',43,15,210],['Egejské moře',38.7,25,190],['Jónské moře',38.1,19,180],['Tyrhénské moře',40.2,12,210,2],['Ligurské moře',43.4,9.3,140,2],['Marmarské moře',40.7,28,85,2],['Keltské moře',50.0,-8.1,200,2]
+].forEach(v=>add(v[0],'sea',v[1],v[2],v[3],v[4]||1));
+[
+['Biskajský záliv',45.0,-4.7,250],['Botnický záliv',63.1,20.3,220],['Finský záliv',59.8,26.6,155],['Lví záliv',43.0,4.8,135],['Rižský záliv',57.5,23.5,135,2],['Janovský záliv',44.3,8.9,90,2],['Neapolský záliv',40.72,14.25,70,2],['Kvarnerský záliv',44.65,14.4,105,2],['Záliv sv. Vavřince (mimo Evropu)']
+].filter(x=>x.length>2).forEach(v=>add(v[0],'gulf',v[1],v[2],v[3],v[4]||1));
+[
+['Skandinávský poloostrov',63.2,15,420],['Pyrenejský poloostrov',40.2,-4,320],['Apeninský poloostrov',42.5,12.7,280],['Balkánský poloostrov',42.0,22.0,340],['Jutský poloostrov',56.3,9.1,135],['Peloponés',37.5,22.2,125],['Poloostrov Kola',67.7,36,190,2],['Bretaňský poloostrov',48.3,-3.4,115,2],['Krymský poloostrov',45.3,34,150,2],['Istrie',45.1,13.9,85,2],['Apulie',40.9,16.7,120,2]
+].forEach(v=>add(v[0],'peninsula',v[1],v[2],v[3],v[4]||1));
+[
+['Island',64.9,-18.6,215],['Irsko',53.4,-8.0,185],['Velká Británie',54.4,-3.0,300],['Sicílie',37.55,14.0,165],['Sardinie',40.0,9.0,150],['Korsika',42.15,9.1,110],['Kréta',35.2,24.9,175],['Kypr',35.1,33.3,120],['Baleáry',39.5,2.8,160],['Malta',35.9,14.43,55],['Faerské ostrovy',62,-6.8,85,2],['Shetlandy',60.3,-1.2,80,2],['Orkneje',59,-3,80,2],['Hebridy',57.2,-6.6,150,2],['Lofoty',68.2,13.8,105,2],['Ålandy',60.2,20,75,2],['Azory',38.3,-28.3,220,2],['Madeira',32.75,-16.95,85,2],['Rhodos',36.2,28,75,2],['Korfu',39.62,19.92,65,2],['Mallorca',39.62,2.9,75,2],['Santorini',36.4,25.4,45,2],['Nová země',74.1,56,230,2]
+].forEach(v=>add(v[0],'island',v[1],v[2],v[3],v[4]||1));
+[
+['Gibraltarský průliv',35.96,-5.6,55],['Lamanšský průliv',50.45,-1.4,140],['Bospor',41.1,29,40],['Dardanely',40.2,26.4,52],['Øresund (Öresund)',55.9,12.7,55],['Skagerrak',58.1,9.4,115,2],['Kattegat',56.8,11.3,110,2],['Messinská úžina',38.25,15.6,45,2],['Otrantský průliv',40.15,18.8,85,2],['Kerčský průliv',45.35,36.6,55,2],['Dánské úžiny',55.7,11.7,110,2]
+].forEach(v=>add(v[0],'strait',v[1],v[2],v[3],v[4]||1));
+[
+['Ladožské jezero',60.9,31.5,105],['Oněžské jezero',61.8,35.5,105],['Vänern',58.9,13.4,110],['Vättern',58.3,14.6,75,2],['Ženevské jezero (Léman)',46.45,6.6,65],['Bodamské jezero',47.64,9.35,65],['Balaton',46.85,17.7,85],['Gardské jezero',45.62,10.64,55,2],['Comské jezero',46.03,9.25,55,2],['Ohridské jezero',41.05,20.7,65,2],['Skadarské jezero',42.18,19.3,70,2],['Peipuské jezero',58.55,27.5,105,2],['Saimaa',61.4,28.1,100,2]
+].forEach(v=>add(v[0],'lake',v[1],v[2],v[3],v[4]||1));
+// Ranges and rivers are tested against any part of a simplified course, not merely one central point.
+function line(n,c,pts,r,level=1){add(n,c,pts[0][1],pts[0][0],r,level,{line:pts});}
+line('Alpy','mountain',[[6,45.7],[7.8,46],[9,46.4],[10.5,46.8],[12,46.6],[13.6,47]],85);
+line('Pyreneje','mountain',[[-1.7,43],[0.6,42.8],[2,42.55],[3,42.45]],90);
+line('Karpaty','mountain',[[17.2,48.2],[19.5,49.1],[21.9,49.2],[24.5,48.4],[25.4,47.5],[25,45.5],[22.8,45]],100);
+line('Apeniny','mountain',[[9.5,44.3],[11.4,43.5],[13.1,42.5],[14.5,41.2],[16.1,39.5]],90);
+line('Skandinávské pohoří','mountain',[[7.5,60],[8.5,62],[13,65],[16.5,67],[19,69],[20.5,70]],145);
+line('Dinárské hory','mountain',[[14.9,45.5],[16.7,44],[18.2,43.4],[19.5,42.3]],105);
+line('Balkán (Stara planina)','mountain',[[22.6,43.2],[24.6,42.8],[27.1,42.7]],85);
+line('Ural','mountain',[[59.5,57],[59.5,60],[59,63],[61,66]],140,2);
+line('Kavkaz','mountain',[[40,43.2],[42,43.2],[44,42.8],[46,42.6]],120);
+line('Sudety','mountain',[[15,50.8],[15.7,50.75],[16.6,50.5],[17.4,50.2]],70);
+line('Šumava','mountain',[[12.2,49.1],[13,49.0],[13.7,48.8]],65,2);
+line('Jura','mountain',[[5.9,46.5],[6.8,46.9],[7.2,47.4]],70,2);
+line('Vogézy','mountain',[[6.8,48.5],[7.0,47.8]],65,2);
+line('Rodopy','mountain',[[23.9,41.8],[25,41.6],[26,41.6]],80,2);
+line('Pindos','mountain',[[20.7,40],[21.4,39.2],[21.8,38.5]],75,2);
+line('Kantaberské pohoří','mountain',[[-7.5,43],[-5.7,43.0],[-4.5,43.1]],80,2);
+line('Sierra Nevada','mountain',[[-3.6,37],[-2.8,37]],65,2);
+line('Tatry','mountain',[[19.5,49.2],[20.1,49.2],[20.4,49.15]],55,2);
+line('Rýn','river',[[8.7,46.6],[7.6,47.6],[7.6,48.6],[7.8,49.9],[7.1,50.7],[6.5,51.7],[4.4,51.9]],70);
+line('Dunaj','river',[[8.1,48.1],[10,48.4],[12.9,48.6],[16.4,48.2],[19,45.3],[21,44.7],[23.6,44.1],[26,44.5],[28.9,45.2]],85);
+line('Labe','river',[[15.6,50.7],[14.2,50.8],[13.7,51.1],[12.4,51.7],[11.9,52.3],[10.2,53.4],[8.7,53.9]],80);
+line('Odra','river',[[17.6,49.6],[17.1,50.9],[16.6,52.0],[14.5,52.3],[14.6,53.4],[14.0,53.9]],80);
+line('Visla','river',[[19.0,49.6],[19.7,50.1],[21,50.1],[21.0,52.1],[19.5,52.5],[18.6,53.5],[18.8,54.4]],85);
+line('Volha','river',[[35,57.2],[37.8,56.8],[40.9,57],[43.5,56],[47,55.5],[48.5,53],[47.5,51],[47.9,46.5]],125);
+line('Dněpr','river',[[33.4,55.9],[31.6,53],[30.6,50.5],[32.4,49],[33.5,47.5],[32,46.5]],100);
+line('Don','river',[[38,54],[39,51],[40.5,49],[40.3,47.2],[39.4,47],[38.8,46.9]],115,2);
+line('Seina','river',[[4.7,47.5],[3.4,48.2],[2.35,48.85],[1,49.4],[0.15,49.45]],80);
+line('Loira','river',[[4.2,44.8],[3.2,45.8],[2.2,47.1],[0.7,47.4],[-1.7,47.25]],90);
+line('Rhôna','river',[[8.2,46.6],[6.2,46.3],[5.1,45.2],[4.8,44.4],[4.4,43.4]],85);
+line('Pád','river',[[7.1,44.6],[8.6,45],[9.6,45.1],[11.4,45],[12.4,44.9]],70);
+line('Tibera','river',[[12.0,43.8],[12.5,43],[12.5,41.9],[12.25,41.75]],70,2);
+line('Ebro','river',[[-4.4,43],[-3,42.5],[-1.1,42.5],[0.1,41.8],[0.8,40.7]],95,2);
+line('Tajo','river',[[-5.6,40.3],[-7.2,39.5],[-9.1,38.7]],95,2);
+line('Douro','river',[[-3.8,42],[-5.7,41.6],[-7.8,41.2],[-8.7,41.1]],90,2);
+line('Temže','river',[[-1.7,51.65],[-0.2,51.5],[0.5,51.5]],65);
+line('Něva','river',[[31.4,60.9],[30.4,59.9]],60,2);
+line('Němen','river',[[27.4,53.3],[25.2,54.7],[23.6,55],[21.0,55]],85,2);
+line('Dněstr','river',[[23,49],[26.5,48.7],[29,47],[30.3,46.3]],95,2);
+line('Dráva','river',[[12.1,46.7],[15.4,46.65],[17.9,46.4],[18.7,45.55]],90,2);
+line('Sáva','river',[[14.3,46.3],[16.5,45.8],[18.6,45.2],[20.5,44.8]],90,2);
+const smallCountryRadius={'Andorra':28,'Lichtenštejnsko':18,'Lucembursko':34,'Malta':22};TERMS.forEach(t=>{if(t.c==='country'&&smallCountryRadius[t.n])t.r=smallCountryRadius[t.n]});
+const fmt=(x)=>Math.round(x).toLocaleString('cs-CZ');
+const enabled=new Set(Object.keys(CATS));
+let mode='quiz',level=1,worldReady=false,projection,path,countries=[],byIso=new Map(),mapW=0,mapH=0,transform,zoom,session=null,selectedLearn=null;
+const svg=d3.select('#map');const view=svg.append('g');const graticule=view.append('g');const landLayer=view.append('g');const traceLayer=view.append('g');const screen=svg.append('g');
+const EUROPE={type:'Polygon',coordinates:[[[-32,30],[-32,80],[65,80],[65,30],[-32,30]]]};
+const categories=Object.keys(CATS);
+function countByCat(cat){return TERMS.filter(t=>t.c===cat&&t.level<=level).length;}
+function renderCats(){const root=$('catList');root.textContent='';categories.forEach(c=>{const [emoji,label]=CATS[c],lab=document.createElement('label');lab.className='cat';const left=document.createElement('span');left.className='cat-left';const cb=document.createElement('input');cb.type='checkbox';cb.checked=enabled.has(c);cb.addEventListener('change',()=>{if(cb.checked)enabled.add(c);else enabled.delete(c);renderCats();updateLearnList();});const icon=document.createElement('span');icon.className='emoji';icon.textContent=emoji;const t=document.createElement('span');t.textContent=label;const cnt=document.createElement('span');cnt.className='count';cnt.textContent=countByCat(c);left.append(cb,icon,t);lab.append(left,cnt);root.appendChild(lab);});}
+function showDrawer(x){$('sidebar').classList.toggle('show',x);$('scrim').classList.toggle('show',x)}
+$('openMenu').onclick=()=>showDrawer(true);$('closeMenu').onclick=()=>showDrawer(false);$('scrim').onclick=()=>showDrawer(false);
+$('allCats').onclick=()=>{categories.forEach(c=>enabled.add(c));renderCats();updateLearnList()};$('noCats').onclick=()=>{enabled.clear();renderCats();updateLearnList()};
+document.querySelectorAll('[data-level]').forEach(b=>b.onclick=()=>{level=b.dataset.level==='basic'?1:2;document.querySelectorAll('[data-level]').forEach(x=>x.classList.toggle('active',x===b));renderCats();updateLearnList();});
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+function setMode(m){mode=m;document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x.dataset.mode===m));$('quizSettings').hidden=m!=='quiz';$('quizOptions').hidden=m!=='quiz';$('learnOptions').hidden=m!=='learn';$('historyBox').hidden=m!=='quiz'||!session;hideEnd();clearMarks();if(m==='learn'){session=null;learnIntro();updateLearnList()}else{session=null;quizIntro()}showDrawer(false)}
+function quizIntro(){$('qcategory').textContent='PŘIPRAVENO K TESTOVÁNÍ';$('qtitle').textContent='Vyber okruhy a spusť test';$('qhint').textContent='Test náhodně kombinuje vybraná témata. Zkouší se kliknutím do mapy.';$('qprogress').textContent='10 okruhů zeměpisu';$('scoreTop').textContent='0 / 0';feedback(null);$('prevBtn').disabled=true;$('nextBtn').disabled=true;}
+function learnIntro(){$('qcategory').textContent='PROHLÍŽENÍ';$('qtitle').textContent='Poznávej Evropu';$('qhint').textContent='Vyber pojem v seznamu nebo klikni na libovolný stát v mapě.';$('qprogress').textContent=TERMS.length+' pojmů v databázi';$('scoreTop').textContent='Učení';feedback(null);$('prevBtn').disabled=true;$('nextBtn').disabled=true;}
+function feedback(type,msg){const el=$('feedback');el.className='feedback'+(type?' on '+type:'');el.textContent=msg||'';}
+function degreeDistance(lat1,lon1,lat2,lon2){const dLat=(lat2-lat1)*R,dLon=(lon2-lon1)*R;const a=Math.sin(dLat/2)**2+Math.cos(lat1*R)*Math.cos(lat2*R)*Math.sin(dLon/2)**2;return 12742.018*Math.asin(Math.min(1,Math.sqrt(a)));}
+function distanceToLine(lat,lon,coords){let best=Infinity;const cos=Math.cos(lat*R);for(let i=0;i<coords.length-1;i++){const [x1,y1]=coords[i],[x2,y2]=coords[i+1];const ax=x1*cos,ay=y1,bx=x2*cos,by=y2,px=lon*cos,py=lat;const dx=bx-ax,dy=by-ay,den=dx*dx+dy*dy;const t=den?Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/den)):0;best=Math.min(best,Math.hypot(px-ax-t*dx,py-ay-t*dy)*111.195);}return best;}
+function countryAt(lon,lat){for(const f of countries){if(d3.geoContains(f,[lon,lat]))return f}return null;}
+function findCountry(t){return byIso.get(Number(t.iso));}
+function evaluate(t,lon,lat){const d=t.line?distanceToLine(lat,lon,t.line):degreeDistance(lat,lon,t.lat,t.lon);if(t.c==='country'){const f=findCountry(t);if(f){return {ok:!!d3.geoContains(f,[lon,lat]),dist:d};}}return {ok:d<=t.r,dist:d};}
+function randomize(items){let a=items.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;}
+function makeQuiz(){if(!worldReady){alert('Mapa se ještě nenačetla.');return}const pool=TERMS.filter(t=>enabled.has(t.c)&&t.level<=level);if(!pool.length){alert('Vyber alespoň jeden tematický okruh.');return}const num=$('qcount').value==='all'?pool.length:Math.min(+$('qcount').value,pool.length); // round-robin categories prevents one category from overwhelming mixed tests
+const groups=categories.filter(c=>enabled.has(c)).map(c=>randomize(pool.filter(t=>t.c===c))).filter(g=>g.length);let list=[];while(list.length<num&&groups.some(g=>g.length)){const shuffled=randomize(groups.filter(g=>g.length));for(const g of shuffled){if(list.length>=num)break;list.push(g.shift());}}session={list,idx:0,answers:Array(list.length).fill(null)};hideEnd();clearMarks();$('historyBox').hidden=false;renderQuestion();showDrawer(false);}
+function currentScore(){return session?session.answers.filter(a=>a?.ok).length:0}
+function answeredCount(){return session?session.answers.filter(Boolean).length:0}
+function renderQuestion(){if(!session)return;const {idx,list,answers}=session;if(idx>=list.length){finish();return}const t=list[idx],a=answers[idx];clearMarks();$('qcategory').textContent=CATS[t.c][0]+' '+CATS[t.c][1].toUpperCase();$('qtitle').textContent=t.n;$('qhint').textContent=a?'Odpověď už je vyhodnocena. Pokračuj dál.':'Klikni v mapě na správné místo.';$('qprogress').textContent=`Otázka ${idx+1} / ${list.length}`;$('scoreTop').textContent=`${currentScore()} / ${answeredCount()}`;$('prevBtn').disabled=idx===0;$('nextBtn').disabled=!a;if(a){showAnswer(t,a);$('nextBtn').textContent=idx===list.length-1?'Výsledky →':'Další →'}else{feedback(null);$('nextBtn').textContent='Další →'}renderHistory();}
+function renderHistory(){if(!session)return;const box=$('history');box.replaceChildren();session.answers.forEach((a,i)=>{if(!a)return;const b=document.createElement('button');const t=document.createElement('span');t.textContent=session.list[i].n;const icon=document.createElement('span');icon.className=a.ok?'yes':'no';icon.textContent=a.ok?'✓':'×';b.append(t,icon);b.onclick=()=>{session.idx=i;renderQuestion();showDrawer(false)};box.appendChild(b);});}
+function nextQuestion(){if(!session||!session.answers[session.idx])return;session.idx++;renderQuestion()}
+$('startBtn').onclick=makeQuiz;$('nextBtn').onclick=nextQuestion;$('prevBtn').onclick=()=>{if(session&&session.idx>0){session.idx--;renderQuestion()}};
+function finish(){const got=currentScore(),total=session?.list.length||0,pct=Math.round(got/Math.max(1,total)*100);$('endScore').textContent=pct+' %';$('endText').textContent=`Správně ${got} z ${total} otázek. Chybně ${total-got}. Odpovědi najdeš v historii testu.`;$('scoreTop').textContent=got+' / '+total;$('endOverlay').classList.remove('hidden');}
+function hideEnd(){$('endOverlay').classList.add('hidden')}$('repeatBtn').onclick=makeQuiz;$('changeBtn').onclick=()=>{hideEnd();showDrawer(true)};
+$('homeBtn').onclick=()=>{hideEnd();session=null;clearMarks();mode==='quiz'?quizIntro():learnIntro();showDrawer(true);$('historyBox').hidden=true};
+function clearMarks(){displayed=null;traceLayer.selectAll('*').remove();screen.selectAll('*').remove();landLayer.selectAll('.country').classed('correct-country',false);}
+function screenPt(lon,lat){const p=projection([lon,lat]);return p?transform.apply(p):null;}
+function showLabel(lon,lat,name){const p=screenPt(lon,lat);if(!p)return;const x=Math.min(Math.max(p[0]+12,5),Math.max(5,mapW-175)),y=Math.min(Math.max(p[1]-22,20),mapH-26);const label=screen.append('g').attr('transform',`translate(${x},${y})`);const box=label.append('rect').attr('class','labelbg').attr('rx',7).attr('y',-15).attr('height',23);const txt=label.append('text').attr('class','pinlabel').attr('x',8).attr('y',1).text(name);const width=Math.min(mapW-15,txt.node().getComputedTextLength()+16);box.attr('width',Math.max(40,width));}
+let displayed=null;
+function mark(t,guess=null){clearMarks();displayed={t,guess};const ft=t.c==='country'?findCountry(t):null;if(ft){landLayer.selectAll('.country').filter(d=>Number(d.id)===Number(t.iso)).classed('correct-country',true);}
+if(t.line){traceLayer.append('path').datum({type:'LineString',coordinates:t.line}).attr('class','geo-line').attr('d',path);}
+const p=screenPt(t.lon,t.lat);if(p){screen.append('circle').attr('class','spot').attr('cx',p[0]).attr('cy',p[1]).attr('r',6);if(!ft&&!t.line){screen.append('circle').attr('class','targetring').attr('cx',p[0]).attr('cy',p[1]).attr('r',16);}showLabel(t.lon,t.lat,t.n);}
+if(guess){const g=screenPt(guess.lon,guess.lat);if(g){screen.append('circle').attr('class','guessed').attr('cx',g[0]).attr('cy',g[1]).attr('r',5);if(p)screen.append('line').attr('class','pointerline').attr('x1',g[0]).attr('y1',g[1]).attr('x2',p[0]).attr('y2',p[1]);}}
+}
+function showAnswer(t,a){mark(t,a);let s;if(t.c==='country'){s=a.ok?`Správně! ${t.n}. Hlavní město: ${t.capital}.`:`Nesprávně. Správná země je zvýrazněna zeleně (${t.n}, hlavní město ${t.capital}).`;}else{s=a.ok?`Správně! Od orientačního bodu nebo průběhu tě dělí ${fmt(a.dist)} km.`:`Mimo cílovou oblast, přibližně o ${fmt(a.dist)} km. Správná poloha je zeleně.`;}feedback(a.ok?'ok':'wrong',s);}
+function onMapClick(event){if(!worldReady||event.defaultPrevented)return;const pix=d3.pointer(event,svg.node());const ground=transform.invert(pix),ll=projection.invert(ground);if(!ll)return;const [lon,lat]=ll;if(lat<25||lat>83||lon< -38||lon>75)return;if(mode==='learn'){const f=countryAt(lon,lat);if(f){const item=TERMS.find(x=>x.c==='country'&&Number(x.iso)===Number(f.id));if(item){showLearn(item);return}}let nearest=null,dist=Infinity;for(const t of TERMS){if(!enabled.has(t.c)||t.level>level||t.c==='country')continue;const d=t.line?distanceToLine(lat,lon,t.line):degreeDistance(lat,lon,t.lat,t.lon);if(d<dist){dist=d;nearest=t}}if(nearest&&dist<Math.max(90,nearest.r)){showLearn(nearest)}return;}
+if(!session||session.idx>=session.list.length||session.answers[session.idx])return;const t=session.list[session.idx];const result=evaluate(t,lon,lat);session.answers[session.idx]={...result,lat,lon};renderQuestion();}
+svg.on('click',onMapClick);
+function showLearn(t){selectedLearn=t;mark(t);$('qcategory').textContent=CATS[t.c][0]+' '+CATS[t.c][1].toUpperCase();$('qtitle').textContent=t.n;$('qhint').textContent=t.c==='country'?'Hlavní město: '+t.capital:(t.state?'Stát: '+t.state:'Najdi další pojem v seznamu.');$('qprogress').textContent='Režim prohlížení';$('prevBtn').disabled=true;$('nextBtn').disabled=true;feedback('info',t.c==='country'?`${t.n} · hlavní město ${t.capital}`:t.state?`${t.n} · ${t.state}`:'Zvýrazněná poloha je orientační učební údaj.');showDrawer(false);}
+function updateLearnList(){const box=$('exploreList');box.replaceChildren();const q=($('searchTerm').value||'').trim().toLocaleLowerCase('cs');const arr=TERMS.filter(t=>enabled.has(t.c)&&t.level<=level&&t.n.toLocaleLowerCase('cs').includes(q)).sort((a,b)=>a.n.localeCompare(b.n,'cs'));$('exploreCount').textContent=arr.length+' dostupných pojmů';arr.forEach(t=>{const b=document.createElement('button');const txt=document.createElement('span');txt.textContent=t.n;const c=document.createElement('small');c.textContent=CATS[t.c][0];b.append(txt,c);b.onclick=()=>showLearn(t);box.appendChild(b)});}
+$('searchTerm').addEventListener('input',updateLearnList);
+function drawBase(){if(!worldReady)return;landLayer.selectAll('*').remove();graticule.selectAll('*').remove();graticule.append('path').datum(d3.geoGraticule10()).attr('class','gridline').attr('d',path);landLayer.selectAll('path').data(countries).join('path').attr('class','country').attr('d',path);}
+function resize(){if(!worldReady)return;const box=$('mapbox'),w=box.clientWidth,h=box.clientHeight;if(w<10||h<10)return;let c=null;if(mapW&&projection&&transform){try{c=projection.invert(transform.invert([mapW/2,mapH/2]));}catch(e){}}mapW=w;mapH=h;svg.attr('viewBox',`0 0 ${w} ${h}`);projection=d3.geoMercator().fitExtent([[12,12],[w-12,h-12]],EUROPE).clipExtent([[0,0],[w,h]]);path=d3.geoPath(projection);drawBase();let trans=transform||d3.zoomIdentity;if(c&&Number.isFinite(c[0])&&Number.isFinite(c[1])&&Math.abs(c[0])<180){const pt=projection(c);trans=d3.zoomIdentity.translate(w/2-pt[0]*trans.k,h/2-pt[1]*trans.k).scale(trans.k);}svg.call(zoom.transform,trans);}
+function redrawOverlay(){if(displayed)mark(displayed.t,displayed.guess);}
+zoom=d3.zoom().scaleExtent([1,18]).on('zoom',e=>{transform=e.transform;view.attr('transform',transform);redrawOverlay();});svg.call(zoom).on('dblclick.zoom',null);
+$('zoomIn').onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1.6);$('zoomOut').onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1/1.6);$('zoomHome').onclick=()=>{displayed=null;clearMarks();svg.transition().duration(240).call(zoom.transform,d3.zoomIdentity).on('end',()=>{if(session&&session.answers[session.idx])showAnswer(session.list[session.idx],session.answers[session.idx]);else if(mode==='learn'&&selectedLearn)mark(selectedLearn);});};
+window.addEventListener('resize',()=>{clearTimeout(window.__r);window.__r=setTimeout(resize,120)});
+async function getWorld(){let last;for(const url of ['https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json','https://unpkg.com/world-atlas@2/countries-50m.json']){try{const response=await fetch(url);if(!response.ok)throw Error('HTTP '+response.status);return response.json()}catch(e){last=e}}throw last||new Error('Nedostupný podklad.');}
+async function init(){renderCats();quizIntro();try{if(!window.d3||!window.topojson)throw Error('Chybí knihovna D3 nebo topojson-client.');const obj=await getWorld();countries=topojson.feature(obj,obj.objects.countries).features.filter(f=>Number(f.id)!==10);byIso=new Map(countries.map(f=>[Number(f.id),f]));worldReady=true;resize();$('loading').classList.add('hidden');$('mapHint').textContent='Přibližuj kolečkem nebo dvěma prsty. Mapa se mezi otázkami neresetuje.';}catch(e){console.error('GeoLab loading:',e);$('loading').textContent='Mapový podklad se nepodařilo načíst. Zkontroluj připojení a obnov stránku.';}}
+init();
+})();
+</script>
+</body>
+</html>
