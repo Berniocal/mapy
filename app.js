@@ -222,22 +222,28 @@ function projectionFor(continent,w,h){
   const key=`proj:${continent}:${w}x${h}`;
   if(renderCache.has(key))return renderCache.get(key);
 
-  let proj;
-  if(continent==="asia"){
-    // Explicit Mercator view avoids fitExtent/antimeridian edge cases.
-    const center=[100,35];
-    const scale=Math.min(w/3.45,h/2.15);
-    proj=d3.geoMercator()
-      .center(center)
-      .translate([w/2,h/2])
-      .scale(scale)
-      .clipExtent([[0,0],[w,h]]);
-  }else{
-    const box={type:"Polygon",coordinates:[[[-32,29],[-32,75],[65,75],[65,29],[-32,29]]]};
-    proj=d3.geoMercator()
-      .fitExtent([[8,8],[w-8,h-8]],box)
-      .clipExtent([[0,0],[w,h]]);
-  }
+  const b=continent==="asia"
+    ? {minLon:20,maxLon:178,minLat:-12,maxLat:82}
+    : {minLon:-32,maxLon:65,minLat:29,maxLat:75};
+
+  const rad=Math.PI/180;
+  const mercY=lat=>Math.log(Math.tan(Math.PI/4+(lat*rad)/2));
+  const invMercY=y=>(2*Math.atan(Math.exp(y))-Math.PI/2)/rad;
+
+  const lonSpan=(b.maxLon-b.minLon)*rad;
+  const yMin=mercY(b.minLat), yMax=mercY(b.maxLat);
+  const ySpan=Math.abs(yMax-yMin);
+  const pad=12;
+  const scale=Math.min((w-2*pad)/lonSpan,(h-2*pad)/ySpan);
+  const centerLon=(b.minLon+b.maxLon)/2;
+  const centerLat=invMercY((yMin+yMax)/2);
+
+  const proj=d3.geoMercator()
+    .center([centerLon,centerLat])
+    .translate([w/2,h/2])
+    .scale(scale)
+    .clipExtent([[0,0],[w,h]]);
+
   renderCache.set(key,proj);
   return proj;
 }
