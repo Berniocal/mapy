@@ -57,8 +57,96 @@ const CATEGORY_ORDER=["pen","isl","sea","des","low","mnt"];
 const TARGET_REGIONS=window.MAP_TARGET_REGIONS||{};
 const SMALL_ISLAND_TOLERANCE=window.MAP_SMALL_ISLAND_TOLERANCE||new Set();
 
+const MARINE_ALIASES={
+  "Středozemní moře":["Mediterranean Sea"],
+  "Barentsovo moře":["Barents Sea"],
+  "Norské moře":["Norwegian Sea"],
+  "Bílé moře":["White Sea"],
+  "Irské moře":["Irish Sea"],
+  "Severní moře":["North Sea"],
+  "Azovské moře":["Sea of Azov","Azov Sea"],
+  "Černé moře":["Black Sea"],
+  "Marmarské moře":["Sea of Marmara","Marmara Sea"],
+  "Egejské moře":["Aegean Sea"],
+  "Jónské moře":["Ionian Sea"],
+  "Jaderské moře":["Adriatic Sea"],
+  "Tyrhénské moře":["Tyrrhenian Sea"],
+  "Ligurské moře":["Ligurian Sea"],
+  "Baltské moře":["Baltic Sea"],
+  "Botnický záliv":["Gulf of Bothnia"],
+  "Finský záliv":["Gulf of Finland"],
+  "Biskajský záliv":["Bay of Biscay"],
+  "Lví záliv":["Gulf of Lion","Gulf of Lyons"],
+  "Gibraltarský průliv":["Strait of Gibraltar"],
+  "Bospor":["Bosporus","Bosphorus"],
+  "Dardanely":["Dardanelles"],
+  "Lamanšský průliv":["English Channel"],
+  "Kattegat":["Kattegat"],
+  "Øresund":["Oresund","Øresund","The Sound"],
+  "Aralské moře":["Aral Sea"],
+  "Kaspické moře":["Caspian Sea"],
+  "Východočínské moře":["East China Sea"],
+  "Celebeské moře":["Celebes Sea"],
+  "Beringovo moře":["Bering Sea"],
+  "Ochotské moře":["Sea of Okhotsk","Okhotsk Sea"],
+  "Japonské moře":["Sea of Japan","Japan Sea"],
+  "Žluté moře":["Yellow Sea"],
+  "Východosibiřské moře":["East Siberian Sea"],
+  "Filipínské moře":["Philippine Sea"],
+  "Jihočínské moře":["South China Sea"],
+  "Andamanské moře":["Andaman Sea"],
+  "Arabské moře":["Arabian Sea"],
+  "Rudé moře":["Red Sea"],
+  "Beringův průliv":["Bering Strait"],
+  "Malacký průliv":["Strait of Malacca","Malacca Strait"],
+  "Bab-al-Mandab":["Bab el Mandeb","Bab-el-Mandeb","Bab al Mandab"],
+  "Kerčský průliv":["Kerch Strait"],
+  "Hormuzský průliv":["Strait of Hormuz","Hormuz Strait"],
+  "Obský záliv":["Gulf of Ob","Ob Bay"],
+  "Bengálský záliv":["Bay of Bengal"],
+  "Ománský záliv":["Gulf of Oman"],
+  "Perský záliv":["Persian Gulf"],
+  "Adenský záliv":["Gulf of Aden"]
+};
+
+let marineFeatures=[];
+
 const targetGeometryCache=new Map();
 const targetSampleCache=new Map();
+
+function normMarineName(v){
+  return String(v??"")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+}
+function marineFeatureNames(f){
+  const p=f?.properties||{};
+  return [p.name,p.NAME,p.name_en,p.NAME_EN,p.namealt,p.NAMEALT,p.note,p.NOTE]
+    .filter(Boolean).map(normMarineName);
+}
+function orientGeoForD3(feature){
+  if(!feature?.geometry)return feature;
+  const f=JSON.parse(JSON.stringify(feature));
+  const fixPoly=coords=>{
+    if(!Array.isArray(coords)||!coords.length)return coords;
+    const probe={type:"Feature",properties:{},geometry:{type:"Polygon",coordinates:coords}};
+    return d3.geoArea(probe)>2*Math.PI ? coords.map(r=>[...r].reverse()) : coords;
+  };
+  if(f.geometry.type==="Polygon")f.geometry.coordinates=fixPoly(f.geometry.coordinates);
+  else if(f.geometry.type==="MultiPolygon")f.geometry.coordinates=f.geometry.coordinates.map(fixPoly);
+  return f;
+}
+function naturalMarineGeometry(t){
+  const aliases=(MARINE_ALIASES[t.n]||[]).map(normMarineName);
+  if(!aliases.length||!marineFeatures.length)return null;
+  const hits=marineFeatures.filter(f=>{
+    const names=marineFeatureNames(f);
+    return aliases.some(a=>names.includes(a));
+  });
+  if(!hits.length)return null;
+  const oriented=hits.map(orientGeoForD3);
+  return oriented.length===1?oriented[0]:{type:"FeatureCollection",features:oriented};
+}
 
 function ringSignedArea(coords){
   let a=0;
@@ -119,6 +207,14 @@ function targetInfo(t){
   let info;
   if(t.custom)info={geometry:geoCircleKm(t.lon,t.lat,t.r),mode:"custom",source:"custom"};
   else{
+    if(t.c==="sea"){
+      const marine=naturalMarineGeometry(t);
+      if(marine){
+        info={geometry:marine,region:marine,mode:"marine",source:"natural-earth-marine"};
+        targetGeometryCache.set(key,info);
+        return info;
+      }
+    }
     const spec=TARGET_REGIONS[t.n];
     if(!spec){
       const region=geoCircleKm(t.lon,t.lat,Math.max(20,t.r));
@@ -148,6 +244,9 @@ function insideCoreTarget(t,lon,lat){
     return inManualRegion&&isLandPoint(lon,lat);
   }
   if(t.c==="sea"){
+    if(info.source==="natural-earth-marine"){
+      return d3.geoContains(info.geometry,[lon,lat]) && !isLandPoint(lon,lat);
+    }
     if(!inManualRegion)return false;
     if(info.mode==="narrow")return true;
     return !isLandPoint(lon,lat);
@@ -181,7 +280,7 @@ function densifyRing(ring,maxPerEdge=8){
 function targetBoundarySamples(t){
   const key=t.id||t.n;if(targetSampleCache.has(key))return targetSampleCache.get(key);
   const info=targetInfo(t);let rings=[];
-  if(!t.custom&&TARGET_REGIONS[t.n]&&t.c!=="isl")rings=[normalizedRing(TARGET_REGIONS[t.n].coords)];else rings=collectOuterRings(info.geometry,[]);
+  if(info.source==="natural-earth-marine")rings=collectOuterRings(info.geometry,[]);else if(!t.custom&&TARGET_REGIONS[t.n]&&t.c!=="isl")rings=[normalizedRing(TARGET_REGIONS[t.n].coords)];else rings=collectOuterRings(info.geometry,[]);
   let pts=[];for(const ring of rings)pts.push(...densifyRing(ring,8));
   const MAX=900;if(pts.length>MAX){const step=Math.ceil(pts.length/MAX);pts=pts.filter((_,i)=>i%step===0)}
   if(!pts.length)pts=[[t.lon,t.lat]];targetSampleCache.set(key,pts);return pts;
@@ -305,6 +404,22 @@ document.getElementById("startBtn").onclick=startGame;document.getElementById("a
 function finish(){locked=true;nextBtn.disabled=true;clearAnswer();const pct=queue.length?Math.round(correct/queue.length*100):0;document.getElementById("finalScore").textContent=`${correct} / ${queue.length}`;document.getElementById("finalText").textContent=`Úspěšnost ${pct} %.`;document.getElementById("endScreen").classList.remove("hidden")}
 window.addEventListener("resize",()=>{clearTimeout(window.__rt);window.__rt=setTimeout(()=>{renderCache.clear();sizeMap();prepareRenderCaches()},120)});
 async function getWorld(){const urls=["https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json","https://unpkg.com/world-atlas@2/countries-10m.json","https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json","https://unpkg.com/world-atlas@2/countries-50m.json"];let lastErr;for(const url of urls){try{const r=await fetch(url,{mode:"cors"});if(!r.ok)throw new Error("HTTP "+r.status);return await r.json()}catch(e){lastErr=e}}throw lastErr||new Error("Mapová data se nepodařilo stáhnout.")}
+
+async function getMarine(){
+  const urls=[
+    "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_geography_marine_polys.geojson",
+    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_geography_marine_polys.geojson"
+  ];
+  for(const url of urls){
+    try{
+      const r=await fetch(url,{mode:"cors"});
+      if(!r.ok)throw new Error("HTTP "+r.status);
+      const j=await r.json();
+      if(j?.features?.length)return j.features;
+    }catch(e){console.warn("Marine vrstva se nenačetla z",url,e)}
+  }
+  return [];
+}
 document.querySelectorAll(".continent-btn").forEach(btn=>{btn.addEventListener("click",()=>{const next=btn.dataset.continent==="asia"?"asia":"eu";if(next===currentContinent){updateContinentButtons();return}currentContinent=next;updateContinentTexts();const root=document.getElementById("categorySelectors");if(root)root.innerHTML="";renderTermSelectors();clearAnswer();clearFeedback();queue=[];index=-1;locked=true;progEl.textContent="0 / 0";scoreEl.textContent="Správně: 0";nextBtn.disabled=true;if(ready){resetView(false);sizeMap()}})});
 document.getElementById("addTermBtn").addEventListener("click",()=>{if(!ready)return;pendingPosition=null;addMode=true;locked=true;document.getElementById("startScreen").classList.add("hidden");document.getElementById("endScreen").classList.add("hidden");clearAnswer();clearFeedback();resetView();qEl.textContent="Klikni do mapy na správnou polohu";catEl.textContent="Přidávání vlastního pojmu";progEl.textContent="";nextBtn.disabled=true});
 document.getElementById("cancelTermBtn").addEventListener("click",()=>{addMode=false;pendingPosition=null;document.getElementById("addTermScreen").classList.add("hidden");document.getElementById("startScreen").classList.remove("hidden");qEl.textContent="Vyber nastavení a spusť hru";catEl.textContent="";progEl.textContent="0 / 0";updateContinentButtons();updateContinentTexts()});
@@ -312,6 +427,6 @@ document.getElementById("saveTermBtn").addEventListener("click",()=>{const name=
 document.getElementById("downloadHtmlBtn").addEventListener("click",()=>{const clone=document.documentElement.cloneNode(true),embedded=clone.querySelector("#embeddedCustomTerms");if(embedded)embedded.textContent=jsonForHtmlScript(customTerms);clone.querySelector("#startScreen")?.classList.remove("hidden");clone.querySelector("#endScreen")?.classList.add("hidden");clone.querySelector("#addTermScreen")?.classList.add("hidden");const cloneQuestion=clone.querySelector("#question"),cloneCategory=clone.querySelector("#category"),cloneProgress=clone.querySelector("#progress"),cloneScore=clone.querySelector("#score"),cloneFeedback=clone.querySelector("#feedback"),cloneNext=clone.querySelector("#nextBtn");if(cloneQuestion)cloneQuestion.textContent="Vyber nastavení a spusť hru";if(cloneCategory)cloneCategory.textContent="";if(cloneProgress)cloneProgress.textContent="0 / 0";if(cloneScore)cloneScore.textContent="Správně: 0";if(cloneFeedback){cloneFeedback.className="feedback";cloneFeedback.textContent=""}if(cloneNext)cloneNext.setAttribute("disabled","");const svgClone=clone.querySelector("#mapSvg");if(svgClone)svgClone.innerHTML="";clone.querySelectorAll('link[href],script[src]').forEach(el=>{const attr=el.tagName==="LINK"?"href":"src",value=el.getAttribute(attr)||"";if(value&&!/^https?:/i.test(value))el.setAttribute(attr,"https://bernio.cz/mapy/"+value.replace(/^\.\//,""))});const html="<!doctype html>\n"+clone.outerHTML,blob=new Blob([html],{type:"text/html;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="evropa_klikaci_mapa_s_vlastnimi_pojmy.html";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
 document.getElementById("exportTermsBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(customTerms,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="evropa-vlastni-pojmy.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500)});
 document.getElementById("importTermsInput").addEventListener("change",async e=>{const file=e.target.files?.[0];if(!file)return;try{const arr=JSON.parse(await file.text());if(!Array.isArray(arr))throw new Error();const imported=arr.filter(t=>t&&typeof t.n==="string"&&["pen","isl","sea","des","low","mnt"].includes(t.c)&&Number.isFinite(+t.lat)&&Number.isFinite(+t.lon)&&Number.isFinite(+t.r)).map(t=>({id:"custom-"+Date.now()+"-"+Math.random().toString(36).slice(2),n:t.n.trim(),c:t.c,lat:+t.lat,lon:+t.lon,r:+t.r,ct:(t.ct==="asia"?"asia":currentContinent),custom:true}));customTerms=customTerms.concat(imported);saveCustomTerms();renderTermSelectors();alert(`Importováno: ${imported.length} pojmů.`)}catch(err){alert("Soubor se nepodařilo načíst jako platný export vlastních pojmů.")}finally{e.target.value=""}});
-async function init(){try{setLoadingTarget(12);if(!window.d3||!window.topojson)throw new Error("Nepodařilo se načíst knihovnu mapy.");setLoadingTarget(28);const world=await getWorld();setLoadingTarget(70);countriesFeature=topojson.feature(world,world.objects.countries);setLoadingTarget(80);buildLandComponents();targetGeometryCache.clear();targetSampleCache.clear();currentContinent="eu";updateContinentTexts();prepareRenderCaches();sizeMap();setLoadingTarget(98);ready=true;locked=true;renderTermSelectors();document.getElementById("startBtn").disabled=false;qEl.textContent="Vyber nastavení a spusť hru";finishLoading()}catch(e){console.error(e);clearInterval(loadingTimer);loading.className="loading error";loading.innerHTML="<div class=\"loading-box\"><div class=\"loading-title\">Mapy se nepodařilo načíst</div><button onclick=\"location.reload()\">Zkusit znovu</button></div>";qEl.textContent="Mapa se nenačetla"}}
+async function init(){try{setLoadingTarget(12);if(!window.d3||!window.topojson)throw new Error("Nepodařilo se načíst knihovnu mapy.");setLoadingTarget(28);const [world,marine]=await Promise.all([getWorld(),getMarine()]);setLoadingTarget(70);countriesFeature=topojson.feature(world,world.objects.countries);marineFeatures=marine||[];setLoadingTarget(80);buildLandComponents();targetGeometryCache.clear();targetSampleCache.clear();currentContinent="eu";updateContinentTexts();prepareRenderCaches();sizeMap();setLoadingTarget(98);ready=true;locked=true;renderTermSelectors();document.getElementById("startBtn").disabled=false;qEl.textContent="Vyber nastavení a spusť hru";finishLoading()}catch(e){console.error(e);clearInterval(loadingTimer);loading.className="loading error";loading.innerHTML="<div class=\"loading-box\"><div class=\"loading-title\">Mapy se nepodařilo načíst</div><button onclick=\"location.reload()\">Zkusit znovu</button></div>";qEl.textContent="Mapa se nenačetla"}}
 init();
 })();
