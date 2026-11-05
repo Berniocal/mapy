@@ -51,9 +51,9 @@ button:disabled{opacity:.45;cursor:default}
 .loading-percent{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .loading.error{padding:25px;text-align:center;color:#912018}
 
-.overlay{position:absolute;z-index:30;inset:0;display:grid;place-items:center;padding:18px;background:rgba(244,246,248,.92);backdrop-filter:blur(4px)}
+.overlay{position:absolute;z-index:30;inset:0;display:grid;place-items:center;padding:18px;background:rgba(244,246,248,.92);backdrop-filter:blur(4px);overflow-y:auto;overflow-x:hidden;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .overlay.hidden{display:none}
-.panel{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 14px 38px rgba(16,24,40,.13)}
+.panel{width:min(560px,100%);max-height:92vh;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 14px 38px rgba(16,24,40,.13)}
 .panel h1{font-size:24px;margin:0 0 8px}
 .panel p{margin:0 0 17px;color:var(--muted);line-height:1.45}
 .settings{display:grid;gap:12px}
@@ -104,7 +104,7 @@ button:disabled{opacity:.45;cursor:default}
   #backBtn{min-height:38px;padding:6px 8px;font-size:12px}
   #nextBtn{min-width:68px;min-height:38px;padding:6px 9px}
   .feedback{font-size:12px;padding:6px 8px}
-  .panel{padding:15px;border-radius:14px;max-height:94vh}
+  .overlay{display:block;padding:10px 8px}\n  .panel{padding:15px;border-radius:14px;max-height:none;margin:0 auto 24px;overflow:visible;touch-action:pan-y}
   .panel h1{font-size:20px;margin-bottom:12px}
   .continent-btn{min-height:48px;font-size:16px}
   .term-group summary{min-height:42px;padding:8px 10px}
