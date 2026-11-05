@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Slepá mapa – Evropa a Asie</title>
+<title>Slepé mapy</title>
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --text:#15171b; --muted:#667085;
@@ -46,15 +46,34 @@ button:disabled{opacity:.45;cursor:default}
 .map-note{position:absolute;left:9px;bottom:7px;font-size:10px;color:#5b6470;background:rgba(255,255,255,.78);padding:3px 6px;border-radius:6px;pointer-events:none}
 .map-tools{position:absolute;right:10px;top:10px;display:grid;gap:5px}
 .map-tools button{width:42px;height:42px;padding:0;font-size:20px;background:rgba(255,255,255,.94);box-shadow:0 1px 5px rgba(0,0,0,.12)}
-.loading{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;color:#4b5563;background:var(--sea);z-index:4}
+.loading{
+  position:absolute;inset:0;z-index:100;
+  display:grid;place-items:center;
+  background:#f7f9fb;color:var(--text);
+}
+.loading-box{width:min(360px,78vw);display:grid;gap:12px;text-align:center}
+.loading-title{font-size:20px;font-weight:850}
+.loading-track{height:6px;border-radius:999px;background:#e3e7ed;overflow:hidden}
+.loading-bar{height:100%;width:0;background:var(--accent);border-radius:999px;transition:width .12s linear}
+.loading-percent{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .loading.error{padding:25px;text-align:center;color:#912018}
 
 .overlay{position:absolute;z-index:30;inset:0;display:grid;place-items:center;padding:18px;background:rgba(244,246,248,.92);backdrop-filter:blur(4px)}
 .overlay.hidden{display:none}
-.panel{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 50px rgba(16,24,40,.16)}
+.panel{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 14px 38px rgba(16,24,40,.13)}
 .panel h1{font-size:24px;margin:0 0 8px}
 .panel p{margin:0 0 17px;color:var(--muted);line-height:1.45}
-.settings{display:grid;gap:13px}
+.settings{display:grid;gap:12px}
+.continent-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.continent-btn{
+  min-height:52px;border:1px solid var(--line);background:#f8f9fb;
+  font-size:17px;font-weight:850;border-radius:12px;
+}
+.continent-btn.active{
+  background:var(--accent);border-color:var(--accent);color:#fff;
+  box-shadow:0 4px 12px rgba(36,87,214,.18)
+}
+.simple-label{font-size:12px;color:var(--muted);font-weight:750;margin-bottom:-4px}
 .checks{display:grid;gap:8px}
 .check{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fafafa;cursor:pointer}
 .check input{width:19px;height:19px}
@@ -79,7 +98,7 @@ button:disabled{opacity:.45;cursor:default}
   min-height:28px!important;height:28px;padding:0 8px!important;
   border-radius:8px!important;color:#912018;font-size:13px;font-weight:800;
 }
-.custom-tools{display:grid;gap:7px}
+.custom-tools{display:grid;gap:7px;padding-top:2px}
 .custom-actions{display:flex;gap:7px;flex-wrap:wrap}
 .smallbtn{min-height:34px!important;padding:5px 9px!important;font-size:12px!important;font-weight:700!important}
 .filebtn{
@@ -107,7 +126,8 @@ button:disabled{opacity:.45;cursor:default}
   #nextBtn{min-width:68px;min-height:38px;padding:6px 9px}
   .feedback{font-size:12px;padding:6px 8px}
   .panel{padding:15px;border-radius:14px;max-height:94vh}
-  .panel h1{font-size:21px}
+  .panel h1{font-size:20px;margin-bottom:12px}
+  .continent-btn{min-height:48px;font-size:16px}
   .term-group summary{min-height:42px;padding:8px 10px}
   .term-list{padding-left:28px}
   .term-item{font-size:12px}
@@ -148,7 +168,13 @@ button:disabled{opacity:.45;cursor:default}
 
 <div class="map-wrap" id="mapWrap">
   <svg id="mapSvg" aria-label="Slepá mapa"></svg>
-  <div id="loading" class="loading">Načítám slepou mapu…</div>
+  <div id="loading" class="loading">
+    <div class="loading-box">
+      <div class="loading-title">Načítám mapy</div>
+      <div class="loading-track"><div id="loadingBar" class="loading-bar"></div></div>
+      <div id="loadingPercent" class="loading-percent">0 %</div>
+    </div>
+  </div>
   <div class="map-tools">
     <button id="zoomIn" title="Přiblížit">+</button>
     <button id="zoomOut" title="Oddálit">−</button>
@@ -157,21 +183,17 @@ button:disabled{opacity:.45;cursor:default}
   </div>
   <div class="map-note">Natural Earth / world-atlas · bez API klíče</div>
 
-  <div id="startScreen" class="overlay">
+  <div id="startScreen" class="overlay hidden">
     <div class="panel">
-      <h1 id="startTitle">Slepá mapa</h1>
-      <p>Náhodně se zobrazí pojem. Nejprve si vyber světadíl, potom skupiny pojmů. Klikni do mapy tam, kde útvar leží. Při chybě se ukáže správná poloha a vzdálenost od tvého kliknutí.</p>
+      <h1 id="startTitle">Vyber mapu</h1>
       <div class="settings">
-<div class="settingline">
-          <label for="continent">Světadíl</label>
-          <select id="continent">
-            <option value="eu" selected>Evropa</option>
-            <option value="asia">Asie</option>
-          </select>
+        <div class="continent-buttons" id="continentButtons">
+          <button type="button" class="continent-btn active" data-continent="eu">Evropa</button>
+          <button type="button" class="continent-btn" data-continent="asia">Asie</button>
         </div>
         <div id="categorySelectors" class="category-selectors"></div>
         <div class="settingline">
-          <label for="count">Počet otázek</label>
+          <span class="simple-label">Počet otázek</span>
           <select id="count">
             <option value="10">10</option>
             <option value="20" selected>20</option>
@@ -181,11 +203,11 @@ button:disabled{opacity:.45;cursor:default}
         </div>
 
         <div class="custom-tools">
-          <button id="addTermBtn" type="button">＋ Přidat vlastní pojem</button>
+          <button id="addTermBtn" type="button">＋ Přidat pojem</button>
           <div class="custom-actions">
-            <button id="downloadHtmlBtn" type="button" class="smallbtn">Stáhnout HTML s vlastními pojmy</button>
-            <button id="exportTermsBtn" type="button" class="smallbtn">Export vlastních</button>
-            <label class="smallbtn filebtn">Import vlastních
+            <button id="downloadHtmlBtn" type="button" class="smallbtn">Stáhnout HTML</button>
+            <button id="exportTermsBtn" type="button" class="smallbtn">Export</button>
+            <label class="smallbtn filebtn">Import
               <input id="importTermsInput" type="file" accept=".json,application/json" hidden>
             </label>
           </div>
@@ -193,7 +215,6 @@ button:disabled{opacity:.45;cursor:default}
 
         <button id="startBtn" class="primary" disabled>Spustit</button>
       </div>
-      <div class="hint">Mapa je vektorová a nemá žádné názvy. Nejprve si vyber světadíl. U Evropy jsou vestavěné pojmy detailněji doladěné; u Asie je přidaná samostatná sada pojmů ze zaslaného seznamu. Není potřeba žádný API klíč.</div>
     </div>
   </div>
 
@@ -234,7 +255,6 @@ button:disabled{opacity:.45;cursor:default}
           </div>
         </label>
       </div>
-      <div class="hint">Tolerance určuje, jak blízko musí žák kliknout, aby se odpověď počítala jako správná.</div>
       <div class="actions" style="margin-top:16px">
         <button id="saveTermBtn" class="primary">Uložit pojem</button>
         <button id="cancelTermBtn">Zrušit</button>
@@ -678,6 +698,30 @@ const scoreEl=document.getElementById("score");
 const feedbackEl=document.getElementById("feedback");
 const nextBtn=document.getElementById("nextBtn");
 const loading=document.getElementById("loading");
+const loadingBar=document.getElementById("loadingBar");
+const loadingPercent=document.getElementById("loadingPercent");
+let loadingValue=0, loadingTarget=0;
+const loadingTimer=setInterval(()=>{
+  if(loadingValue<loadingTarget){
+    loadingValue=Math.min(loadingTarget,loadingValue+1);
+    if(loadingBar)loadingBar.style.width=loadingValue+"%";
+    if(loadingPercent)loadingPercent.textContent=loadingValue+" %";
+  }
+},20);
+function setLoadingTarget(v){ loadingTarget=Math.max(loadingTarget,Math.min(100,v)); }
+function finishLoading(){
+  setLoadingTarget(100);
+  const done=setInterval(()=>{
+    if(loadingValue>=100){
+      clearInterval(done);
+      clearInterval(loadingTimer);
+      setTimeout(()=>{
+        loading.style.display="none";
+        document.getElementById("startScreen").classList.remove("hidden");
+      },120);
+    }
+  },20);
+}
 
 function haversine(lat1,lon1,lat2,lon2){
   const R=6371.0088, rad=Math.PI/180;
@@ -691,8 +735,15 @@ function updateContinentTexts(){
   const startTitle=document.getElementById("startTitle");
   const mapSvg=document.getElementById("mapSvg");
   if(appTitle)appTitle.textContent=`${titleName} – klikni do mapy`;
-  if(startTitle)startTitle.textContent=`${titleName} – slepá mapa`;
+  if(startTitle)startTitle.textContent="Vyber mapu";
   if(mapSvg)mapSvg.setAttribute("aria-label",`Slepá mapa ${titleName.toLowerCase()}`);
+  updateContinentButtons();
+}
+
+function updateContinentButtons(){
+  document.querySelectorAll(".continent-btn").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.continent===currentContinent);
+  });
 }
 function fmtKm(k){return k<10?k.toFixed(1).replace(".",",")+" km":Math.round(k).toLocaleString("cs-CZ")+" km"}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -785,7 +836,7 @@ function renderTermSelectors(){
 
     const count=document.createElement("span");
     count.className="term-count";
-    count.textContent=`(${items.length})`;
+    count.textContent=`${items.length}`;
 
     summary.append(master,title,count);
     details.appendChild(summary);
@@ -946,8 +997,7 @@ function renderAnswer(){
     answerWaterLayer.append("path")
       .datum(info.geometry)
       .attr("class","answer-area")
-      .attr("d",path);
-  }else if(t.c==="isl" && info.source==="island-components"){
+      .attr("d",path);  }else if(t.c==="isl" && info.source==="island-components"){
     // Ostrov / souostroví: zvýrazní se skutečné pevninské části.
     answerLandLayer.append("path")
       .datum(info.geometry)
@@ -997,7 +1047,8 @@ svg.on("click",event=>{
     pendingPosition={lat,lon};
     addMode=false;
     locked=true;
-    document.getElementById("pickedPositionText").textContent=      `Vybraná poloha: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°.`;
+    document.getElementById("pickedPositionText").textContent=
+      `Vybraná poloha: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°.`;
     document.getElementById("addTermScreen").classList.remove("hidden");
     qEl.textContent="Přidat vlastní pojem";
     catEl.textContent="Vyplň název, skupinu a toleranci.";
@@ -1053,7 +1104,7 @@ document.getElementById("backBtn").onclick=()=>{
   qEl.textContent="Vyber nastavení a spusť hru";
   catEl.textContent="";
   progEl.textContent="0 / 0";
-  document.getElementById("continent").value=currentContinent;
+  updateContinentButtons();
   updateContinentTexts();
   scoreEl.textContent="Správně: 0";
   nextBtn.disabled=true;
@@ -1096,24 +1147,31 @@ async function getWorld(){
 }
 
 
-document.getElementById("continent").addEventListener("change",e=>{
-  currentContinent=e.target.value==="asia" ? "asia" : "eu";
-  updateContinentTexts();
-  const root=document.getElementById("categorySelectors");
-  if(root)root.innerHTML="";
-  renderTermSelectors();
-  clearAnswer();
-  clearFeedback();
-  queue=[];
-  index=-1;
-  locked=true;
-  progEl.textContent="0 / 0";
-  scoreEl.textContent="Správně: 0";
-  nextBtn.disabled=true;
-  if(ready){
-    sizeMap();
-    resetView(false);
-  }
+document.querySelectorAll(".continent-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const next=btn.dataset.continent==="asia" ? "asia" : "eu";
+    if(next===currentContinent){
+      updateContinentButtons();
+      return;
+    }
+    currentContinent=next;
+    updateContinentTexts();
+    const root=document.getElementById("categorySelectors");
+    if(root)root.innerHTML="";
+    renderTermSelectors();
+    clearAnswer();
+    clearFeedback();
+    queue=[];
+    index=-1;
+    locked=true;
+    progEl.textContent="0 / 0";
+    scoreEl.textContent="Správně: 0";
+    nextBtn.disabled=true;
+    if(ready){
+      sizeMap();
+      resetView(false);
+    }
+  });
 });
 
 document.getElementById("addTermBtn").addEventListener("click",()=>{
@@ -1137,7 +1195,7 @@ document.getElementById("cancelTermBtn").addEventListener("click",()=>{
   qEl.textContent="Vyber nastavení a spusť hru";
   catEl.textContent="";
   progEl.textContent="0 / 0";
-  document.getElementById("continent").value=currentContinent;
+  updateContinentButtons();
   updateContinentTexts();
 });
 
@@ -1269,25 +1327,31 @@ function auditBuiltInTargets(){
 
 async function init(){
   try{
+    setLoadingTarget(12);
     if(!window.d3||!window.topojson)throw new Error("Nepodařilo se načíst knihovnu mapy.");
+    setLoadingTarget(28);
     const world=await getWorld();
+    setLoadingTarget(70);
     countriesFeature=topojson.feature(world,world.objects.countries);
     bordersFeature=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
+    setLoadingTarget(82);
     buildLandComponents();
     targetGeometryCache.clear();
     targetSampleCache.clear();
-    currentContinent=document.getElementById("continent")?.value==="asia" ? "asia" : "eu";
+    currentContinent="eu";
     updateContinentTexts();
     sizeMap();
+    setLoadingTarget(92);
     ready=true;locked=true;
     renderTermSelectors();
-    loading.style.display="none";
     document.getElementById("startBtn").disabled=false;
     qEl.textContent="Vyber nastavení a spusť hru";
+    finishLoading();
   }catch(e){
     console.error(e);
+    clearInterval(loadingTimer);
     loading.className="loading error";
-    loading.innerHTML="Mapu se nepodařilo načíst.<br>Zkontroluj připojení k internetu a stránku obnov.";
+    loading.innerHTML="<div class=\"loading-box\"><div class=\"loading-title\">Mapy se nepodařilo načíst</div><button onclick=\"location.reload()\">Zkusit znovu</button></div>";
     qEl.textContent="Mapa se nenačetla";
   }
 }
