@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Evropa – klikni do mapy</title>
+<title>Slepá mapa – Evropa a Asie</title>
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --text:#15171b; --muted:#667085;
@@ -337,7 +337,7 @@ const TERMS = [
 
 TERMS.forEach((t,i)=>{ if(!t.id)t.id="base-"+i; t.custom=false; });
 TERMS.forEach((t)=>{ if(!t.ct)t.ct="eu"; });
-const ASIA_TERMS = [{"n": "Aralské moře", "c": "sea", "lat": 45.2, "lon": 59.4, "r": 170}, {"n": "Kaspické moře", "c": "sea", "lat": 41.8, "lon": 51.0, "r": 360}, {"n": "Východočínské moře", "c": "sea", "lat": 28.5, "lon": 126.0, "r": 520}, {"n": "Celebeské moře", "c": "sea", "lat": 3.5, "lon": 123.5, "r": 430}, {"n": "Beringovo moře", "c": "sea", "lat": 58.0, "lon": 171.0, "r": 700}, {"n": "Ochotské moře", "c": "sea", "lat": 53.0, "lon": 150.0, "r": 640}, {"n": "Japonské moře", "c": "sea", "lat": 40.0, "lon": 136.0, "r": 520}, {"n": "Žluté moře", "c": "sea", "lat": 35.5, "lon": 123.0, "r": 330}, {"n": "Východosibiřské moře", "c": "sea", "lat": 72.0, "lon": 160.0, "r": 650}, {"n": "Filipínské moře", "c": "sea", "lat": 18.0, "lon": 133.0, "r": 760}, {"n": "Jihočínské moře", "c": "sea", "lat": 14.0, "lon": 114.5, "r": 760}, {"n": "Andamanské moře", "c": "sea", "lat": 11.0, "lon": 96.0, "r": 320}, {"n": "Arabské moře", "c": "sea", "lat": 15.0, "lon": 64.0, "r": 900}, {"n": "Rudé moře", "c": "sea", "lat": 20.0, "lon": 39.0, "r": 720}, {"n": "Středozemní moře", "c": "sea", "lat": 35.0, "lon": 18.0, "r": 1500}, {"n": "Egejské moře", "c": "sea", "lat": 38.7, "lon": 25.0, "r": 260}, {"n": "Marmarské moře", "c": "sea", "lat": 40.75, "lon": 28.6, "r": 110}, {"n": "Černé moře", "c": "sea", "lat": 43.0, "lon": 35.0, "r": 700}, {"n": "Azovské moře", "c": "sea", "lat": 46.0, "lon": 36.0, "r": 180}, {"n": "Beringův průliv", "c": "sea", "lat": 65.9, "lon": -168.5, "r": 90}, {"n": "Malacký průliv", "c": "sea", "lat": 3.0, "lon": 100.4, "r": 170}, {"n": "Bab-al-Mandab", "c": "sea", "lat": 12.6, "lon": 43.3, "r": 90}, {"n": "Bospor", "c": "sea", "lat": 41.15, "lon": 29.1, "r": 55}, {"n": "Dardanely", "c": "sea", "lat": 40.15, "lon": 26.4, "r": 65}, {"n": "Kerčský průliv", "c": "sea", "lat": 45.25, "lon": 36.65, "r": 65}, {"n": "Hormuzský průliv", "c": "sea", "lat": 26.55, "lon": 56.3, "r": 85}, {"n": "Suezský průplav", "c": "sea", "lat": 30.5, "lon": 32.35, "r": 95}, {"n": "Obský záliv", "c": "sea", "lat": 69.0, "lon": 72.0, "r": 260}, {"n": "Bengálský záliv", "c": "sea", "lat": 16.0, "lon": 88.0, "r": 620}, {"n": "Ománský záliv", "c": "sea", "lat": 24.5, "lon": 59.5, "r": 230}, {"n": "Perský záliv", "c": "sea", "lat": 27.0, "lon": 51.0, "r": 300}, {"n": "Adenský záliv", "c": "sea", "lat": 12.4, "lon": 48.0, "r": 260}, {"n": "Gobi", "c": "des", "lat": 42.5, "lon": 104.0, "r": 820}, {"n": "Taklamakan", "c": "des", "lat": 39.0, "lon": 83.0, "r": 500}, {"n": "Karakum", "c": "des", "lat": 40.0, "lon": 59.0, "r": 360}, {"n": "Kyzylkum", "c": "des", "lat": 43.0, "lon": 64.0, "r": 360}, {"n": "Rub al-Chálí", "c": "des", "lat": 20.5, "lon": 48.5, "r": 720}, {"n": "Nafúd", "c": "des", "lat": 28.0, "lon": 41.0, "r": 290}, {"n": "Velká solná poušť", "c": "des", "lat": 34.5, "lon": 54.5, "r": 330}, {"n": "Západosibiřská nížina", "c": "low", "lat": 60.0, "lon": 73.0, "r": 1500}, {"n": "Velká čínská nížina", "c": "low", "lat": 36.0, "lon": 116.0, "r": 450}, {"n": "Mezopotámská nížina", "c": "low", "lat": 32.8, "lon": 45.7, "r": 420}, {"n": "Indoganžská nížina", "c": "low", "lat": 26.0, "lon": 82.0, "r": 1100}, {"n": "Turanská nížina", "c": "low", "lat": 44.0, "lon": 61.0, "r": 750}, {"n": "Tajmyr", "c": "pen", "lat": 75.0, "lon": 100.0, "r": 500}, {"n": "Čukotský poloostrov", "c": "pen", "lat": 66.0, "lon": 172.0, "r": 420}, {"n": "Kamčatka", "c": "pen", "lat": 57.0, "lon": 160.0, "r": 600}, {"n": "Korejský poloostrov", "c": "pen", "lat": 37.5, "lon": 127.0, "r": 320}, {"n": "Zadní Indie", "c": "pen", "lat": 15.0, "lon": 101.0, "r": 820}, {"n": "Přední Indie", "c": "pen", "lat": 18.0, "lon": 78.0, "r": 920}, {"n": "Malajský poloostrov", "c": "pen", "lat": 7.0, "lon": 101.0, "r": 450}, {"n": "Arabský poloostrov", "c": "pen", "lat": 22.0, "lon": 45.0, "r": 980}, {"n": "Malá Asie", "c": "pen", "lat": 39.0, "lon": 35.0, "r": 650}, {"n": "Sinajský poloostrov", "c": "pen", "lat": 29.7, "lon": 33.8, "r": 180}, {"n": "Jamal", "c": "pen", "lat": 69.0, "lon": 69.0, "r": 300}, {"n": "Ural", "c": "mnt", "lat": 60.0, "lon": 60.0, "r": 1100}, {"n": "Altaj", "c": "mnt", "lat": 49.0, "lon": 88.0, "r": 430}, {"n": "Ťan-šan", "c": "mnt", "lat": 42.5, "lon": 80.0, "r": 700}, {"n": "Hindúkuš", "c": "mnt", "lat": 36.0, "lon": 70.0, "r": 420}, {"n": "Pamír", "c": "mnt", "lat": 38.5, "lon": 73.5, "r": 260}, {"n": "Karakorum", "c": "mnt", "lat": 35.5, "lon": 76.0, "r": 260}, {"n": "Himálaj", "c": "mnt", "lat": 29.5, "lon": 86.0, "r": 1300}, {"n": "Kchun-lun", "c": "mnt", "lat": 36.0, "lon": 89.0, "r": 1200}, {"n": "Východní Ghát", "c": "mnt", "lat": 16.0, "lon": 83.0, "r": 480}, {"n": "Západní Ghát", "c": "mnt", "lat": 12.0, "lon": 75.0, "r": 560}, {"n": "Elborz", "c": "mnt", "lat": 36.5, "lon": 53.0, "r": 220}, {"n": "Kavkaz", "c": "mnt", "lat": 42.5, "lon": 45.0, "r": 620}, {"n": "Velký Kavkaz", "c": "mnt", "lat": 43.2, "lon": 45.5, "r": 500}, {"n": "Malý Kavkaz", "c": "mnt", "lat": 40.5, "lon": 45.5, "r": 420}, {"n": "Tibetská vysoká plošina", "c": "mnt", "lat": 33.0, "lon": 88.0, "r": 1300}, {"n": "Severní země", "c": "isl", "lat": 79.0, "lon": 95.0, "r": 260}, {"n": "Kurily", "c": "isl", "lat": 46.5, "lon": 151.0, "r": 500}, {"n": "Sachalin", "c": "isl", "lat": 49.0, "lon": 143.0, "r": 350}, {"n": "Japonské ostrovy", "c": "isl", "lat": 37.0, "lon": 138.0, "r": 900}, {"n": "Honšú", "c": "isl", "lat": 36.2, "lon": 138.5, "r": 560}, {"n": "Kjúšú", "c": "isl", "lat": 32.3, "lon": 130.8, "r": 220}, {"n": "Šikoku", "c": "isl", "lat": 33.8, "lon": 133.6, "r": 150}, {"n": "Rjúkjú", "c": "isl", "lat": 26.8, "lon": 128.2, "r": 420}, {"n": "Hokkaidó", "c": "isl", "lat": 43.5, "lon": 142.7, "r": 300}, {"n": "Tchaj-wan", "c": "isl", "lat": 23.7, "lon": 121.0, "r": 240}, {"n": "Filipíny", "c": "isl", "lat": 13.0, "lon": 122.0, "r": 820}, {"n": "Luzon", "c": "isl", "lat": 16.0, "lon": 121.0, "r": 300}, {"n": "Mindanao", "c": "isl", "lat": 8.0, "lon": 125.0, "r": 300}, {"n": "Moluky", "c": "isl", "lat": -3.0, "lon": 129.0, "r": 380}, {"n": "Velké Sundy", "c": "isl", "lat": 0.5, "lon": 110.0, "r": 1250}, {"n": "Jáva", "c": "isl", "lat": -7.2, "lon": 110.0, "r": 420}, {"n": "Sumatra", "c": "isl", "lat": -0.7, "lon": 101.0, "r": 620}, {"n": "Borneo", "c": "isl", "lat": 1.0, "lon": 114.0, "r": 640}, {"n": "Celebes", "c": "isl", "lat": -1.5, "lon": 121.0, "r": 420}, {"n": "Andamany", "c": "isl", "lat": 12.0, "lon": 92.9, "r": 180}, {"n": "Malé Sundy", "c": "isl", "lat": -8.5, "lon": 120.0, "r": 720}, {"n": "Srí Lanka", "c": "isl", "lat": 7.2, "lon": 80.7, "r": 210}, {"n": "Maledivy", "c": "isl", "lat": 3.0, "lon": 73.0, "r": 280}, {"n": "Lakadivy", "c": "isl", "lat": 10.5, "lon": 72.8, "r": 140}, {"n": "Bahrajn", "c": "isl", "lat": 26.0, "lon": 50.55, "r": 60}, {"n": "Kypr", "c": "isl", "lat": 35.0, "lon": 33.2, "r": 240}, {"n": "Novosibiřské ostrovy", "c": "isl", "lat": 75.5, "lon": 145.0, "r": 420}];
+const ASIA_TERMS = [{"n": "Aralské moře", "c": "sea", "lat": 45.2, "lon": 59.4, "r": 170}, {"n": "Kaspické moře", "c": "sea", "lat": 41.8, "lon": 51.0, "r": 360}, {"n": "Východočínské moře", "c": "sea", "lat": 28.5, "lon": 126.0, "r": 520}, {"n": "Celebeské moře", "c": "sea", "lat": 3.5, "lon": 123.5, "r": 430}, {"n": "Beringovo moře", "c": "sea", "lat": 58.0, "lon": 171.0, "r": 700}, {"n": "Ochotské moře", "c": "sea", "lat": 53.0, "lon": 150.0, "r": 640}, {"n": "Japonské moře", "c": "sea", "lat": 40.0, "lon": 136.0, "r": 520}, {"n": "Žluté moře", "c": "sea", "lat": 35.5, "lon": 123.0, "r": 330}, {"n": "Východosibiřské moře", "c": "sea", "lat": 72.0, "lon": 160.0, "r": 650}, {"n": "Filipínské moře", "c": "sea", "lat": 18.0, "lon": 133.0, "r": 760}, {"n": "Jihočínské moře", "c": "sea", "lat": 14.0, "lon": 114.5, "r": 760}, {"n": "Andamanské moře", "c": "sea", "lat": 11.0, "lon": 96.0, "r": 320}, {"n": "Arabské moře", "c": "sea", "lat": 15.0, "lon": 64.0, "r": 900}, {"n": "Rudé moře", "c": "sea", "lat": 20.0, "lon": 39.0, "r": 720}, {"n": "Středozemní moře", "c": "sea", "lat": 35.0, "lon": 18.0, "r": 1500}, {"n": "Egejské moře", "c": "sea", "lat": 38.7, "lon": 25.0, "r": 260}, {"n": "Marmarské moře", "c": "sea", "lat": 40.75, "lon": 28.6, "r": 110}, {"n": "Černé moře", "c": "sea", "lat": 43.0, "lon": 35.0, "r": 700}, {"n": "Azovské moře", "c": "sea", "lat": 46.0, "lon": 36.0, "r": 180}, {"n": "Beringův průliv", "c": "sea", "lat": 65.9, "lon": 179.0, "r": 110}, {"n": "Malacký průliv", "c": "sea", "lat": 3.0, "lon": 100.4, "r": 170}, {"n": "Bab-al-Mandab", "c": "sea", "lat": 12.6, "lon": 43.3, "r": 90}, {"n": "Bospor", "c": "sea", "lat": 41.15, "lon": 29.1, "r": 55}, {"n": "Dardanely", "c": "sea", "lat": 40.15, "lon": 26.4, "r": 65}, {"n": "Kerčský průliv", "c": "sea", "lat": 45.25, "lon": 36.65, "r": 65}, {"n": "Hormuzský průliv", "c": "sea", "lat": 26.55, "lon": 56.3, "r": 85}, {"n": "Suezský průplav", "c": "sea", "lat": 30.5, "lon": 32.35, "r": 95}, {"n": "Obský záliv", "c": "sea", "lat": 69.0, "lon": 72.0, "r": 260}, {"n": "Bengálský záliv", "c": "sea", "lat": 16.0, "lon": 88.0, "r": 620}, {"n": "Ománský záliv", "c": "sea", "lat": 24.5, "lon": 59.5, "r": 230}, {"n": "Perský záliv", "c": "sea", "lat": 27.0, "lon": 51.0, "r": 300}, {"n": "Adenský záliv", "c": "sea", "lat": 12.4, "lon": 48.0, "r": 260}, {"n": "Gobi", "c": "des", "lat": 42.5, "lon": 104.0, "r": 820}, {"n": "Taklamakan", "c": "des", "lat": 39.0, "lon": 83.0, "r": 500}, {"n": "Karakum", "c": "des", "lat": 40.0, "lon": 59.0, "r": 360}, {"n": "Kyzylkum", "c": "des", "lat": 43.0, "lon": 64.0, "r": 360}, {"n": "Rub al-Chálí", "c": "des", "lat": 20.5, "lon": 48.5, "r": 720}, {"n": "Nafúd", "c": "des", "lat": 28.0, "lon": 41.0, "r": 290}, {"n": "Velká solná poušť", "c": "des", "lat": 34.5, "lon": 54.5, "r": 330}, {"n": "Západosibiřská nížina", "c": "low", "lat": 60.0, "lon": 73.0, "r": 1500}, {"n": "Velká čínská nížina", "c": "low", "lat": 36.0, "lon": 116.0, "r": 450}, {"n": "Mezopotámská nížina", "c": "low", "lat": 32.8, "lon": 45.7, "r": 420}, {"n": "Indoganžská nížina", "c": "low", "lat": 26.0, "lon": 82.0, "r": 1100}, {"n": "Turanská nížina", "c": "low", "lat": 44.0, "lon": 61.0, "r": 750}, {"n": "Tajmyr", "c": "pen", "lat": 75.0, "lon": 100.0, "r": 500}, {"n": "Čukotský poloostrov", "c": "pen", "lat": 66.0, "lon": 172.0, "r": 420}, {"n": "Kamčatka", "c": "pen", "lat": 57.0, "lon": 160.0, "r": 600}, {"n": "Korejský poloostrov", "c": "pen", "lat": 37.5, "lon": 127.0, "r": 320}, {"n": "Zadní Indie", "c": "pen", "lat": 15.0, "lon": 101.0, "r": 820}, {"n": "Přední Indie", "c": "pen", "lat": 18.0, "lon": 78.0, "r": 920}, {"n": "Malajský poloostrov", "c": "pen", "lat": 7.0, "lon": 101.0, "r": 450}, {"n": "Arabský poloostrov", "c": "pen", "lat": 22.0, "lon": 45.0, "r": 980}, {"n": "Malá Asie", "c": "pen", "lat": 39.0, "lon": 35.0, "r": 650}, {"n": "Sinajský poloostrov", "c": "pen", "lat": 29.7, "lon": 33.8, "r": 180}, {"n": "Jamal", "c": "pen", "lat": 69.0, "lon": 69.0, "r": 300}, {"n": "Ural", "c": "mnt", "lat": 60.0, "lon": 60.0, "r": 1100}, {"n": "Altaj", "c": "mnt", "lat": 49.0, "lon": 88.0, "r": 430}, {"n": "Ťan-šan", "c": "mnt", "lat": 42.5, "lon": 80.0, "r": 700}, {"n": "Hindúkuš", "c": "mnt", "lat": 36.0, "lon": 70.0, "r": 420}, {"n": "Pamír", "c": "mnt", "lat": 38.5, "lon": 73.5, "r": 260}, {"n": "Karakorum", "c": "mnt", "lat": 35.5, "lon": 76.0, "r": 260}, {"n": "Himálaj", "c": "mnt", "lat": 29.5, "lon": 86.0, "r": 1300}, {"n": "Kchun-lun", "c": "mnt", "lat": 36.0, "lon": 89.0, "r": 1200}, {"n": "Východní Ghát", "c": "mnt", "lat": 16.0, "lon": 83.0, "r": 480}, {"n": "Západní Ghát", "c": "mnt", "lat": 12.0, "lon": 75.0, "r": 560}, {"n": "Elborz", "c": "mnt", "lat": 36.5, "lon": 53.0, "r": 220}, {"n": "Kavkaz", "c": "mnt", "lat": 42.5, "lon": 45.0, "r": 620}, {"n": "Velký Kavkaz", "c": "mnt", "lat": 43.2, "lon": 45.5, "r": 500}, {"n": "Malý Kavkaz", "c": "mnt", "lat": 40.5, "lon": 45.5, "r": 420}, {"n": "Tibetská vysoká plošina", "c": "mnt", "lat": 33.0, "lon": 88.0, "r": 1300}, {"n": "Severní země", "c": "isl", "lat": 79.0, "lon": 95.0, "r": 260}, {"n": "Kurily", "c": "isl", "lat": 46.5, "lon": 151.0, "r": 500}, {"n": "Sachalin", "c": "isl", "lat": 49.0, "lon": 143.0, "r": 350}, {"n": "Japonské ostrovy", "c": "isl", "lat": 37.0, "lon": 138.0, "r": 900}, {"n": "Honšú", "c": "isl", "lat": 36.2, "lon": 138.5, "r": 560}, {"n": "Kjúšú", "c": "isl", "lat": 32.3, "lon": 130.8, "r": 220}, {"n": "Šikoku", "c": "isl", "lat": 33.8, "lon": 133.6, "r": 150}, {"n": "Rjúkjú", "c": "isl", "lat": 26.8, "lon": 128.2, "r": 420}, {"n": "Hokkaidó", "c": "isl", "lat": 43.5, "lon": 142.7, "r": 300}, {"n": "Tchaj-wan", "c": "isl", "lat": 23.7, "lon": 121.0, "r": 240}, {"n": "Filipíny", "c": "isl", "lat": 13.0, "lon": 122.0, "r": 820}, {"n": "Luzon", "c": "isl", "lat": 16.0, "lon": 121.0, "r": 300}, {"n": "Mindanao", "c": "isl", "lat": 8.0, "lon": 125.0, "r": 300}, {"n": "Moluky", "c": "isl", "lat": -3.0, "lon": 129.0, "r": 380}, {"n": "Velké Sundy", "c": "isl", "lat": 0.5, "lon": 110.0, "r": 1250}, {"n": "Jáva", "c": "isl", "lat": -7.2, "lon": 110.0, "r": 420}, {"n": "Sumatra", "c": "isl", "lat": -0.7, "lon": 101.0, "r": 620}, {"n": "Borneo", "c": "isl", "lat": 1.0, "lon": 114.0, "r": 640}, {"n": "Celebes", "c": "isl", "lat": -1.5, "lon": 121.0, "r": 420}, {"n": "Andamany", "c": "isl", "lat": 12.0, "lon": 92.9, "r": 180}, {"n": "Malé Sundy", "c": "isl", "lat": -8.5, "lon": 120.0, "r": 720}, {"n": "Srí Lanka", "c": "isl", "lat": 7.2, "lon": 80.7, "r": 210}, {"n": "Maledivy", "c": "isl", "lat": 3.0, "lon": 73.0, "r": 280}, {"n": "Lakadivy", "c": "isl", "lat": 10.5, "lon": 72.8, "r": 140}, {"n": "Bahrajn", "c": "isl", "lat": 26.0, "lon": 50.55, "r": 60}, {"n": "Kypr", "c": "isl", "lat": 35.0, "lon": 33.2, "r": 240}, {"n": "Novosibiřské ostrovy", "c": "isl", "lat": 75.5, "lon": 145.0, "r": 420}];
 ASIA_TERMS.forEach((t,i)=>{ t.id=t.id||("asia-"+i); t.ct="asia"; t.custom=false; TERMS.push(t); });
 
 const CUSTOM_STORAGE_KEY="evropaKlikaciMapaCustomTermsV1";
@@ -346,11 +346,11 @@ function normalizeCustomTerms(arr){
   if(!Array.isArray(arr))return [];
   return arr.filter(t =>
     t && typeof t.n==="string" &&
-    ["pen","isl","sea"].includes(t.c) &&
+    ["pen","isl","sea","des","low","mnt"].includes(t.c) &&
     Number.isFinite(+t.lat) && Number.isFinite(+t.lon) && Number.isFinite(+t.r)
   ).map(t=>({
     id:t.id||("custom-"+Date.now()+"-"+Math.random().toString(36).slice(2)),
-    n:t.n.trim(),c:t.c,lat:+t.lat,lon:+t.lon,r:+t.r,custom:true
+    n:t.n.trim(),c:t.c,lat:+t.lat,lon:+t.lon,r:+t.r,ct:(t.ct==="asia"?"asia":"eu"),custom:true
   }));
 }
 
@@ -486,7 +486,15 @@ function targetInfo(t){
   }else{
     const spec=TARGET_REGIONS[t.n];
     if(!spec){
-      info={geometry:geoCircleKm(t.lon,t.lat,Math.max(20,t.r)),mode:t.c,source:"fallback"};
+      const region=geoCircleKm(t.lon,t.lat,Math.max(20,t.r));
+      if(t.c==="isl"){
+        const islands=islandGeometryInsideRegion(region);
+        info=islands
+          ? {geometry:islands,region,mode:t.c,source:"island-components"}
+          : {geometry:region,region,mode:t.c,source:"fallback"};
+      }else{
+        info={geometry:region,region,mode:t.c,source:"fallback"};
+      }
     }else{
       const region=geoPolygon(spec.coords);
       if(t.c==="isl"){
@@ -642,7 +650,7 @@ function distanceToTargetKm(t,lon,lat){
 }
 
 const EUROPE_BOX={type:"Polygon",coordinates:[[[-32,29],[-32,75],[65,75],[65,29],[-32,29]]]};
-const ASIA_BOX={type:"Polygon",coordinates:[[[25,-12],[25,80],[175,80],[175,-12],[25,-12]]]};
+const ASIA_BOX={type:"Polygon",coordinates:[[[20,-12],[20,82],[180,82],[180,-12],[20,-12]]]};
 const VIEW_BOXES={eu:EUROPE_BOX,asia:ASIA_BOX};
 function currentViewBox(){ return VIEW_BOXES[currentContinent] || EUROPE_BOX; }
 
@@ -676,6 +684,15 @@ function haversine(lat1,lon1,lat2,lon2){
   const p1=lat1*rad,p2=lat2*rad,dp=(lat2-lat1)*rad,dl=(lon2-lon1)*rad;
   const a=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
   return 2*R*Math.asin(Math.sqrt(a));
+}
+function updateContinentTexts(){
+  const titleName=currentContinent==="asia" ? "Asie" : "Evropa";
+  const appTitle=document.getElementById("appTitle");
+  const startTitle=document.getElementById("startTitle");
+  const mapSvg=document.getElementById("mapSvg");
+  if(appTitle)appTitle.textContent=`${titleName} – klikni do mapy`;
+  if(startTitle)startTitle.textContent=`${titleName} – slepá mapa`;
+  if(mapSvg)mapSvg.setAttribute("aria-label",`Slepá mapa ${titleName.toLowerCase()}`);
 }
 function fmtKm(k){return k<10?k.toFixed(1).replace(".",",")+" km":Math.round(k).toLocaleString("cs-CZ")+" km"}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -974,14 +991,13 @@ svg.on("click",event=>{
   const ll=projection.invert(p);
   if(!ll)return;
   const [lon,lat]=ll;
-  if(lat<25||lat>84||lon<-38||lon>72)return;
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-85||lat>85)return;
 
   if(addMode){
     pendingPosition={lat,lon};
     addMode=false;
     locked=true;
-    document.getElementById("pickedPositionText").textContent=
-      `Vybraná poloha: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°.`;
+    document.getElementById("pickedPositionText").textContent=      `Vybraná poloha: ${lat.toFixed(2)}°, ${lon.toFixed(2)}°.`;
     document.getElementById("addTermScreen").classList.remove("hidden");
     qEl.textContent="Přidat vlastní pojem";
     catEl.textContent="Vyplň název, skupinu a toleranci.";
@@ -997,7 +1013,8 @@ svg.on("click",event=>{
   locked=true;
 
   try{
-    const result=acceptedClick(t,lon,lat);    const missKm=result.insideCore ? 0 : distanceToTargetKm(t,lon,lat);
+    const result=acceptedClick(t,lon,lat);
+    const missKm=result.insideCore ? 0 : distanceToTargetKm(t,lon,lat);
 
     if(result.ok)correct++;
     scoreEl.textContent=`Správně: ${correct}`;
@@ -1049,7 +1066,7 @@ document.getElementById("settingsBtn").onclick=()=>{
   document.getElementById("endScreen").classList.add("hidden");
   document.getElementById("startScreen").classList.remove("hidden");
   qEl.textContent="Vyber nastavení a spusť hru";catEl.textContent="";
-  progEl.textContent="0 / 0";scoreEl.textContent="Správně: 0";clearFeedback();clearAnswer();resetView();
+  progEl.textContent="0 / 0";scoreEl.textContent="Správně: 0";clearFeedback();clearAnswer();updateContinentTexts();sizeMap();resetView(false);
 };
 function finish(){
   locked=true;nextBtn.disabled=true;clearAnswer();
@@ -1082,7 +1099,17 @@ async function getWorld(){
 document.getElementById("continent").addEventListener("change",e=>{
   currentContinent=e.target.value==="asia" ? "asia" : "eu";
   updateContinentTexts();
+  const root=document.getElementById("categorySelectors");
+  if(root)root.innerHTML="";
   renderTermSelectors();
+  clearAnswer();
+  clearFeedback();
+  queue=[];
+  index=-1;
+  locked=true;
+  progEl.textContent="0 / 0";
+  scoreEl.textContent="Správně: 0";
+  nextBtn.disabled=true;
   if(ready){
     sizeMap();
     resetView(false);
@@ -1121,7 +1148,7 @@ document.getElementById("saveTermBtn").addEventListener("click",()=>{
 
   if(!pendingPosition){ alert("Nejdřív vyber polohu v mapě."); return; }
   if(!name){ alert("Zadej název pojmu."); return; }
-  if(!["pen","isl","sea"].includes(cat)){ alert("Vyber skupinu."); return; }
+  if(!["pen","isl","sea","des","low","mnt"].includes(cat)){ alert("Vyber skupinu."); return; }
   if(!Number.isFinite(radius)||radius<10||radius>1000){
     alert("Tolerance musí být mezi 10 a 1000 km."); return;
   }
@@ -1201,7 +1228,7 @@ document.getElementById("importTermsInput").addEventListener("change",async e=>{
     if(!Array.isArray(arr))throw new Error();
     const imported=arr.filter(t =>
       t && typeof t.n==="string" &&
-      ["pen","isl","sea"].includes(t.c) &&
+      ["pen","isl","sea","des","low","mnt"].includes(t.c) &&
       Number.isFinite(+t.lat) && Number.isFinite(+t.lon) && Number.isFinite(+t.r)
     ).map(t=>({
       id:"custom-"+Date.now()+"-"+Math.random().toString(36).slice(2),
@@ -1249,8 +1276,9 @@ async function init(){
     buildLandComponents();
     targetGeometryCache.clear();
     targetSampleCache.clear();
+    currentContinent=document.getElementById("continent")?.value==="asia" ? "asia" : "eu";
+    updateContinentTexts();
     sizeMap();
-    auditBuiltInTargets();
     ready=true;locked=true;
     renderTermSelectors();
     loading.style.display="none";
