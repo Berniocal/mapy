@@ -202,7 +202,7 @@ const landClip=defs.append("clipPath").attr("id","landClip").attr("clipPathUnits
 const mapLayer=svg.append("g");
 const answerWaterLayer=mapLayer.append("g"),base=mapLayer.append("g"),answerLandLayer=mapLayer.append("g"),answerLayer=svg.append("g");
 let countriesFeature=null,activeCountriesFeature=null;
-const renderCache=new Map(),featureCache=new Map();
+const renderCache=new Map();
 let projection=d3.geoMercator(),path=d3.geoPath(projection),currentTransform=d3.zoomIdentity,lastAnswer=null;
 let ready=false,queue=[],index=-1,correct=0,locked=true,addMode=false,pendingPosition=null,currentContinent="eu";
 const qEl=document.getElementById("question"),catEl=document.getElementById("category"),progEl=document.getElementById("progress"),scoreEl=document.getElementById("score"),feedbackEl=document.getElementById("feedback"),nextBtn=document.getElementById("nextBtn"),loading=document.getElementById("loading"),loadingBar=document.getElementById("loadingBar"),loadingPercent=document.getElementById("loadingPercent");
@@ -218,15 +218,69 @@ function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Ma
 function setFeedback(kind,text){feedbackEl.className="feedback "+kind;feedbackEl.textContent=text}
 function clearFeedback(){feedbackEl.className="feedback";feedbackEl.textContent=""}
 function clearAnswer(){answerWaterLayer.selectAll("*").remove();answerLandLayer.selectAll("*").remove();answerLayer.selectAll("*").remove();lastAnswer=null}
-function viewBoundsFor(continent){return continent==="asia"?{minLon:20,maxLon:178,minLat:-12,maxLat:82}:{minLon:-32,maxLon:65,minLat:29,maxLat:75}}
-function boundsOverlap(a,b){return !(a[1][0]<b.minLon||a[0][0]>b.maxLon||a[1][1]<b.minLat||a[0][1]>b.maxLat)}
-function featuresForContinent(continent){if(featureCache.has(continent))return featureCache.get(continent);const box=viewBoundsFor(continent);const features=(countriesFeature?.features||[]).filter(f=>{try{return boundsOverlap(d3.geoBounds(f),box)}catch(e){return false}});const fc={type:"FeatureCollection",features};featureCache.set(continent,fc);return fc}
-function cacheKey(continent,w,h){return `${continent}:${w}x${h}`}
-function fitGeometryFor(continent){const b=viewBoundsFor(continent);return {type:"MultiPoint",coordinates:[[b.minLon,b.minLat],[b.minLon,b.maxLat],[b.maxLon,b.minLat],[b.maxLon,b.maxLat]]}}
-function buildRenderCache(continent,w,h){const key=cacheKey(continent,w,h);if(renderCache.has(key))return renderCache.get(key);const proj=d3.geoMercator().fitExtent([[8,8],[w-8,h-8]],fitGeometryFor(continent)).clipExtent([[0,0],[w,h]]);const gp=d3.geoPath(proj),fc=featuresForContinent(continent),countryPaths=fc.features.map(f=>gp(f)).filter(Boolean),value={projection:proj,path:gp,featureCollection:fc,countryPaths};renderCache.set(key,value);return value}
-function prepareRenderCaches(){if(!countriesFeature)return;const el=document.getElementById("mapWrap"),w=Math.max(320,el.clientWidth),h=Math.max(320,el.clientHeight);buildRenderCache("eu",w,h);setLoadingTarget(88);buildRenderCache("asia",w,h);setLoadingTarget(95)}
-function sizeMap(){if(!countriesFeature)return;const el=document.getElementById("mapWrap"),w=Math.max(320,el.clientWidth),h=Math.max(320,el.clientHeight);svg.attr("viewBox",`0 0 ${w} ${h}`);const cached=buildRenderCache(currentContinent,w,h);projection=cached.projection;path=cached.path;activeCountriesFeature=cached.featureCollection;drawBase(cached);if(lastAnswer)renderAnswer();else clearAnswer()}
-function drawBase(cached){base.selectAll(".map-base").remove();const mapBase=base.append("g").attr("class","map-base");mapBase.selectAll("path.country").data(cached.countryPaths).join("path").attr("class","country").attr("d",d=>d);landClip.selectAll("*").remove();landClip.selectAll("path").data(cached.countryPaths).join("path").attr("d",d=>d)}
+function projectionFor(continent,w,h){
+  const key=`proj:${continent}:${w}x${h}`;
+  if(renderCache.has(key))return renderCache.get(key);
+
+  let proj;
+  if(continent==="asia"){
+    // Explicit Mercator view avoids fitExtent/antimeridian edge cases.
+    const center=[100,35];
+    const scale=Math.min(w/3.45,h/2.15);
+    proj=d3.geoMercator()
+      .center(center)
+      .translate([w/2,h/2])
+      .scale(scale)
+      .clipExtent([[0,0],[w,h]]);
+  }else{
+    const box={type:"Polygon",coordinates:[[[-32,29],[-32,75],[65,75],[65,29],[-32,29]]]};
+    proj=d3.geoMercator()
+      .fitExtent([[8,8],[w-8,h-8]],box)
+      .clipExtent([[0,0],[w,h]]);
+  }
+  renderCache.set(key,proj);
+  return proj;
+}
+
+function sizeMap(){
+  if(!countriesFeature)return;
+  const el=document.getElementById("mapWrap");
+  const w=Math.max(320,el.clientWidth),h=Math.max(320,el.clientHeight);
+  svg.attr("viewBox",`0 0 ${w} ${h}`);
+  projection=projectionFor(currentContinent,w,h);
+  path=d3.geoPath(projection);
+  activeCountriesFeature=countriesFeature;
+  drawBase();
+  if(lastAnswer)renderAnswer();else clearAnswer();
+}
+
+function drawBase(){
+  base.selectAll(".map-base").remove();
+  const mapBase=base.append("g").attr("class","map-base");
+  mapBase.selectAll("path.country")
+    .data(countriesFeature.features)
+    .join("path")
+    .attr("class","country")
+    .attr("d",path);
+  mapBase.append("path")
+    .datum(countriesFeature)
+    .attr("class","coast")
+    .attr("d",path);
+
+  landClip.selectAll("*").remove();
+  landClip.append("path").datum(countriesFeature).attr("d",path);
+}
+
+function prepareRenderCaches(){
+  if(!countriesFeature)return;
+  const el=document.getElementById("mapWrap");
+  const w=Math.max(320,el.clientWidth),h=Math.max(320,el.clientHeight);
+  projectionFor("eu",w,h);
+  setLoadingTarget(88);
+  projectionFor("asia",w,h);
+  setLoadingTarget(95);
+}
+
 const zoom=d3.zoom().scaleExtent([1,32]).filter(e=>!locked||e.type==="wheel"||e.type==="mousedown"||e.type==="touchstart").on("zoom",e=>{currentTransform=e.transform;mapLayer.attr("transform",currentTransform);const zl=document.getElementById("zoomLevel");if(zl)zl.textContent=(currentTransform.k<10?currentTransform.k.toFixed(1):Math.round(currentTransform.k))+"×";if(lastAnswer)renderAnswerOverlay()});svg.call(zoom);
 function resetView(animated=true){svg.interrupt();if(animated)svg.transition().duration(180).call(zoom.transform,d3.zoomIdentity);else svg.call(zoom.transform,d3.zoomIdentity)}
 document.getElementById("zoomIn").onclick=()=>{svg.interrupt();svg.transition().duration(120).call(zoom.scaleBy,1.7)};document.getElementById("zoomOut").onclick=()=>{svg.interrupt();svg.transition().duration(120).call(zoom.scaleBy,1/1.7)};document.getElementById("resetView").onclick=()=>resetView();
@@ -243,7 +297,7 @@ nextBtn.onclick=showQuestion;
 document.getElementById("backBtn").onclick=()=>{addMode=false;pendingPosition=null;locked=true;clearAnswer();clearFeedback();sizeMap();resetView(false);document.getElementById("endScreen").classList.add("hidden");document.getElementById("addTermScreen").classList.add("hidden");document.getElementById("startScreen").classList.remove("hidden");qEl.textContent="Vyber nastavení a spusť hru";catEl.textContent="";progEl.textContent="0 / 0";updateContinentButtons();updateContinentTexts();scoreEl.textContent="Správně: 0";nextBtn.disabled=true};
 document.getElementById("startBtn").onclick=startGame;document.getElementById("againBtn").onclick=()=>{document.getElementById("endScreen").classList.add("hidden");startGame()};document.getElementById("settingsBtn").onclick=()=>{document.getElementById("endScreen").classList.add("hidden");document.getElementById("startScreen").classList.remove("hidden");qEl.textContent="Vyber nastavení a spusť hru";catEl.textContent="";progEl.textContent="0 / 0";scoreEl.textContent="Správně: 0";clearFeedback();clearAnswer();updateContinentTexts();sizeMap();resetView(false)};
 function finish(){locked=true;nextBtn.disabled=true;clearAnswer();const pct=queue.length?Math.round(correct/queue.length*100):0;document.getElementById("finalScore").textContent=`${correct} / ${queue.length}`;document.getElementById("finalText").textContent=`Úspěšnost ${pct} %.`;document.getElementById("endScreen").classList.remove("hidden")}
-window.addEventListener("resize",()=>{clearTimeout(window.__rt);window.__rt=setTimeout(()=>{renderCache.clear();sizeMap();setTimeout(()=>prepareRenderCaches(),0)},120)});
+window.addEventListener("resize",()=>{clearTimeout(window.__rt);window.__rt=setTimeout(()=>{renderCache.clear();sizeMap();prepareRenderCaches()},120)});
 async function getWorld(){const urls=["https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json","https://unpkg.com/world-atlas@2/countries-10m.json","https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json","https://unpkg.com/world-atlas@2/countries-50m.json"];let lastErr;for(const url of urls){try{const r=await fetch(url,{mode:"cors"});if(!r.ok)throw new Error("HTTP "+r.status);return await r.json()}catch(e){lastErr=e}}throw lastErr||new Error("Mapová data se nepodařilo stáhnout.")}
 document.querySelectorAll(".continent-btn").forEach(btn=>{btn.addEventListener("click",()=>{const next=btn.dataset.continent==="asia"?"asia":"eu";if(next===currentContinent){updateContinentButtons();return}currentContinent=next;updateContinentTexts();const root=document.getElementById("categorySelectors");if(root)root.innerHTML="";renderTermSelectors();clearAnswer();clearFeedback();queue=[];index=-1;locked=true;progEl.textContent="0 / 0";scoreEl.textContent="Správně: 0";nextBtn.disabled=true;if(ready){resetView(false);sizeMap()}})});
 document.getElementById("addTermBtn").addEventListener("click",()=>{if(!ready)return;pendingPosition=null;addMode=true;locked=true;document.getElementById("startScreen").classList.add("hidden");document.getElementById("endScreen").classList.add("hidden");clearAnswer();clearFeedback();resetView();qEl.textContent="Klikni do mapy na správnou polohu";catEl.textContent="Přidávání vlastního pojmu";progEl.textContent="";nextBtn.disabled=true});
