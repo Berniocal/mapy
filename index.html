@@ -4,60 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f4f6f8">
-<title>Slepé mapy</title>
-<link rel="stylesheet" href="styles.css?v=30">
+<meta name="description" content="Slepé mapy Evropy a Asie. Procvičování a prohlížení zeměpisných pojmů na počítači i telefonu.">
+<title>Slepé mapy · Evropa a Asie</title>
+<link rel="stylesheet" href="styles.css?v=31">
 </head>
-<body>
+<body data-layout="pc" data-state="settings">
 <div class="app">
   <header class="topbar">
-    <div class="top-left">
-      <button id="drawerBtn" class="icon-btn hidden" type="button" aria-label="Otevřít seznam">☰</button>
-      <div>
-        <div id="appTitle" class="app-title">Slepé mapy</div>
-        <div id="subTitle" class="app-subtitle"></div>
-      </div>
-    </div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><div><strong>Slepé mapy</strong><span id="appTitle" class="app-title">Evropa a Asie</span></div></div>
     <div class="top-right">
-      <span id="progress" class="stat">0 / 0</span>
-      <span id="score" class="stat">Správně: 0</span>
+      <label class="layout-control"><span class="sr-only">Rozložení</span><select id="layoutMode" aria-label="Rozložení"><option value="auto">Automaticky</option><option value="phone">Telefon</option><option value="pc">Počítač</option></select></label>
+      <span id="progress" class="stat">0 / 0</span><span id="score" class="stat">Správně: 0</span>
       <button id="settingsBtn" type="button">Výběr</button>
-      <button id="prevBtn" type="button" disabled>←</button>
-      <button id="nextBtn" class="primary" type="button" disabled>Další</button>
     </div>
   </header>
-
-  <div id="feedback" class="feedback"></div>
-
-  <main id="mapWrap" class="map-wrap">
-    <svg id="mapSvg" aria-label="Slepá mapa"></svg>
-
-    <div class="map-tools">
-      <button id="zoomIn" type="button" title="Přiblížit">+</button>
-      <button id="zoomOut" type="button" title="Oddálit">−</button>
-      <button id="resetView" type="button" title="Výchozí pohled">⌂</button>
-      <button id="riverToggle" type="button" class="river-btn" title="Zobrazit / skrýt řeky">≋</button>
-      <div id="zoomLevel" class="zoom-level">1×</div>
-    </div>
-
+  <section class="question-bar" aria-live="polite">
+    <div class="question-copy"><div id="questionCategory" class="eyebrow">Připraveno</div><h1 id="subTitle">Vyber mapu a okruhy</h1><div id="feedback" class="feedback"></div></div>
+    <div class="question-actions"><button id="drawerBtn" class="hidden" type="button" aria-label="Otevřít seznam">Pojmy</button><button id="prevBtn" type="button" aria-label="Předchozí otázka" disabled>← Zpět</button><button id="nextBtn" class="primary" type="button" disabled>Další →</button></div>
+  </section>
+  <div class="workspace">
     <div id="drawerScrim" class="drawer-scrim hidden"></div>
-    <aside id="sideDrawer" class="side-drawer hidden">
-      <div class="drawer-head">
-        <strong id="drawerTitle">Pojmy</strong>
-        <button id="drawerClose" class="icon-btn" type="button">×</button>
-      </div>
-      <div id="learnPanel" class="drawer-section hidden">
-        <input id="learnSearch" class="search" type="search" placeholder="Hledat pojem…">
-        <div id="learnCount" class="drawer-note"></div>
-        <div id="learnList" class="learn-list"></div>
-      </div>
-      <div id="historyPanel" class="drawer-section hidden">
-        <div id="historyList" class="history-list"></div>
-      </div>
-    </aside>
-
-    <div id="startScreen" class="overlay hidden">
-      <section class="panel start-panel">
-        <h1>Vyber mapu</h1>
+    <aside id="controlPanel" class="control-panel" aria-label="Ovládání mapy">
+    <div id="startScreen" class="settings-panel hidden">
+      <section class="start-panel">
+        <div class="panel-heading"><h2>Výběr mapy</h2><button id="panelClose" class="icon-btn mobile-only" type="button" aria-label="Zavřít výběr">×</button></div>
 
         <div class="button-grid two">
           <button class="choice-btn active" data-continent="eu" type="button">Evropa</button>
@@ -82,10 +52,11 @@
           </div>
         </div>
 
+        <p class="helper">Zaškrtni celé okruhy, nebo je rozbal a vyber jednotlivé pojmy.</p>
         <div id="categorySelectors" class="category-selectors"></div>
 
         <div id="quizCountRow" class="setting-row">
-          <span>Počet otázek</span>
+          <label for="count">Počet otázek</label>
           <select id="count">
             <option value="10">10</option>
             <option value="20" selected>20</option>
@@ -106,10 +77,22 @@
           </div>
         </details>
 
+        <p id="selectionCount" class="helper" aria-live="polite"></p>
         <button id="startBtn" class="primary start-btn" type="button" disabled>Spustit</button>
       </section>
     </div>
 
+
+      <section id="sideDrawer" class="activity-panel hidden">
+        <div class="panel-heading"><h2 id="drawerTitle">Pojmy</h2><button id="drawerClose" class="icon-btn mobile-only" type="button" aria-label="Zavřít seznam">×</button></div>
+        <div id="learnPanel" class="drawer-section hidden"><input id="learnSearch" class="search" type="search" placeholder="Hledat pojem…" aria-label="Hledat pojem"><div id="learnCount" class="helper"></div><div id="learnList" class="learn-list"></div></div>
+        <div id="historyPanel" class="drawer-section hidden"><p class="helper">Kliknutím na odpověď se k ní vrátíš.</p><div id="historyList" class="history-list"></div><p id="historyEmpty" class="helper">Zatím žádné odpovědi. Klikni do mapy na hledané místo.</p></div>
+      </section>
+      <p class="panel-tip">Přibližuj kolečkem nebo dvěma prsty. Mapu posouvej tažením. Přiblížení zůstává mezi otázkami zachované.</p>
+    </aside>
+    <main id="mapWrap" class="map-wrap">
+      <svg id="mapSvg" role="img" aria-label="Interaktivní slepá mapa"></svg>
+      <div class="map-tools"><button id="zoomIn" type="button" aria-label="Přiblížit" title="Přiblížit">+</button><button id="zoomOut" type="button" aria-label="Oddálit" title="Oddálit">−</button><button id="resetView" type="button" aria-label="Celá mapa" title="Celá mapa">⌂</button><button id="riverToggle" type="button" class="river-btn" aria-label="Zobrazit nebo skrýt řeky" aria-pressed="false" title="Zobrazit nebo skrýt řeky">≋</button><div id="zoomLevel" class="zoom-level">1×</div></div>
     <div id="endScreen" class="overlay hidden">
       <section class="panel end-panel">
         <h2>Hotovo</h2>
@@ -154,24 +137,18 @@
       </section>
     </div>
 
-    <div id="loading" class="loading">
-      <div class="loading-box">
-        <div class="loading-title">Načítám mapy</div>
-        <div class="loading-track"><div id="loadingBar" class="loading-bar"></div></div>
-        <div id="loadingPercent" class="loading-percent">0 %</div>
-      </div>
-    </div>
 
-    <div class="map-credit">Natural Earth · world-atlas</div>
-  </main>
+      <div class="map-credit">Natural Earth · world-atlas</div>
+    </main>
+  </div>
 </div>
-
+<div id="loading" class="loading"><div class="loading-box"><div class="loading-title">Načítám mapy</div><div class="loading-track"><div id="loadingBar" class="loading-bar"></div></div><div id="loadingPercent" class="loading-percent">0 %</div></div></div>
 <script id="embeddedCustomTerms" type="application/json">[]</script>
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
-<script src="europe-data.js?v=30"></script>
-<script src="asia-data.js?v=30"></script>
-<script src="europe-extra-data.js?v=30"></script>
-<script src="app.js?v=30"></script>
+<script src="vendor/d3.v7.min.js"></script>
+<script src="vendor/topojson-client.v3.min.js"></script>
+<script src="europe-data.js?v=31"></script>
+<script src="asia-data.js?v=31"></script>
+<script src="europe-extra-data.js?v=31"></script>
+<script src="app.js?v=31"></script>
 </body>
 </html>

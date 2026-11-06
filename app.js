@@ -97,7 +97,7 @@ const customById = new Map();
 for(const t of embeddedTerms) customById.set(t.id,t);
 for(const t of storedTerms) customById.set(t.id,t);
 let customTerms = [...customById.values()];
-const saveCustomTerms = () => localStorage.setItem(CUSTOM_KEY,JSON.stringify(customTerms));
+const saveCustomTerms = () => { try { localStorage.setItem(CUSTOM_KEY,JSON.stringify(customTerms)); } catch(e) { setFeedback("info","Prohlížeč nepovolil trvalé uložení. Použij Export vlastních pojmů."); } };
 const allTerms = () => TERMS.concat(customTerms);
 
 let currentContinent = "eu";
@@ -122,6 +122,31 @@ let landComponents = [];
 const targetGeometryCache = new Map();
 const targetSampleCache = new Map();
 const mapCache = new Map();
+let mapWidth=0,mapHeight=0;
+let layoutPreference="auto";
+try { layoutPreference=localStorage.getItem("slepeMapyLayout")||"auto"; } catch(e){}
+if(!["auto","phone","pc"].includes(layoutPreference))layoutPreference="auto";
+$("layoutMode").value=layoutPreference;
+function applyLayout(){
+  const phone=layoutPreference==="phone"||(layoutPreference==="auto"&&window.innerWidth<=760);
+  document.body.dataset.layout=phone?"phone":"pc";
+}
+applyLayout();
+$("layoutMode").onchange=()=>{
+  layoutPreference=$("layoutMode").value;
+  try { localStorage.setItem("slepeMapyLayout",layoutPreference); } catch(e){}
+  applyLayout();requestAnimationFrame(()=>sizeMap());
+};
+function showPanel(open=true){
+  document.body.dataset.panelOpen=String(open);
+  $("drawerScrim").classList.toggle("hidden",!open);
+}
+function setQuestion(title,category){
+  $("subTitle").textContent=title;
+  $("questionCategory").textContent=category;
+  document.body.dataset.state=activeMode;
+}
+
 
 const svg = d3.select("#mapSvg");
 const defs = svg.append("defs");
@@ -221,7 +246,7 @@ function projectionFor(ct,w,h){
   const scale=Math.min((w-2*pad)/((b.maxLon-b.minLon)*rad),(h-2*pad)/Math.abs(y2-y1));
   return d3.geoMercator()
     .center([(b.minLon+b.maxLon)/2,imy((y1+y2)/2)])
-    .translate([w/2,h/2]).scale(scale).clipExtent([[0,0],[w,h]]);
+    .translate([w/2,h/2]).scale(scale).clipExtent(null);
 }
 function cacheKey(ct,w,h){ return `${ct}:${w}x${h}`; }
 function buildMapCache(ct,w,h){
@@ -239,22 +264,34 @@ function buildMapCache(ct,w,h){
 }
 function prepareMapCaches(){
   if(!countriesFeature) return;
-  const box=$("mapWrap"),w=Math.max(320,box.clientWidth),h=Math.max(320,box.clientHeight);
+  const box=$("mapWrap"),w=Math.max(1,box.clientWidth),h=Math.max(1,box.clientHeight);
   buildMapCache("eu",w,h);
   setLoadingTarget(89);
   buildMapCache("asia",w,h);
   setLoadingTarget(96);
 }
 function sizeMap(){
-  if(!countriesFeature) return;
-  const box=$("mapWrap"),w=Math.max(320,box.clientWidth),h=Math.max(320,box.clientHeight);
+  if(!countriesFeature)return;
+  const box=$("mapWrap"),w=box.clientWidth,h=box.clientHeight;
+  if(w<20||h<20)return;
+  if(w===mapWidth&&h===mapHeight&&currentMapCache?.continent===currentContinent)return;
+  let center=null;
+  if(mapWidth&&mapHeight&&currentMapCache?.continent===currentContinent){
+    center=projection.invert(currentTransform.invert([mapWidth/2,mapHeight/2]));
+  }
+  mapWidth=w;mapHeight=h;
   svg.attr("viewBox",`0 0 ${w} ${h}`);
   currentMapCache=buildMapCache(currentContinent,w,h);
-  projection=currentMapCache.projection;
-  path=currentMapCache.path;
-  drawBase();
-  drawRiverGuide();
-  if(lastDisplay) renderDisplay(lastDisplay.t,lastDisplay.answer,lastDisplay.learn,true);
+  currentMapCache.continent=currentContinent;
+  projection=currentMapCache.projection;path=currentMapCache.path;
+  drawBase();drawRiverGuide();
+  if(center&&center.every(Number.isFinite)){
+    const p=projection(center),k=currentTransform.k;
+    svg.call(zoom.transform,d3.zoomIdentity.translate(w/2-p[0]*k,h/2-p[1]*k).scale(k));
+  }
+  if(lastDisplay)renderDisplay(lastDisplay.t,lastDisplay.answer,lastDisplay.learn,true);
+  // ResizeObserver can produce many viewport sizes when a phone rotates.
+  while(mapCache.size>6)mapCache.delete(mapCache.keys().next().value);
 }
 function drawBase(){
   baseLayer.selectAll("*").remove();
@@ -526,7 +563,8 @@ function drawScreen(t,answer,learn=false){
     screenLayer.append("circle").attr("class","answer-dot").attr("cx",target[0]).attr("cy",target[1]).attr("r",4);
   }
   if(labelP){
-    screenLayer.append("text").attr("class","answer-label").attr("x",labelP[0]+7).attr("y",labelP[1]-7).text(t.n);
+    screenLayer.append("text").attr("class","answer-label").attr("x",Math.max(8,Math.min(mapWidth-8,labelP[0]+7))).attr("y",Math.max(18,Math.min(mapHeight-12,labelP[1]-7))).text(t.n)
+      .each(function(){const width=this.getComputedTextLength();d3.select(this).attr("x",Math.max(8,Math.min(mapWidth-width-8,labelP[0]+7)))});
   }
 }
 function renderDisplay(t,answer=null,learn=false,fromResize=false){
@@ -552,6 +590,7 @@ function drawRiverGuide(){
   const hasRivers=allTerms().some(t=>(t.ct||"eu")===currentContinent&&t.c==="river");
   btn.classList.toggle("hidden",!hasRivers);
   btn.classList.toggle("active",showRivers);
+  btn.setAttribute("aria-pressed",String(showRivers));
   if(!showRivers||!hasRivers)return;
   const rivers=allTerms().filter(t=>(t.ct||"eu")===currentContinent&&t.c==="river"&&t.line&&termLevel(t)<=currentLevel);
   riverGuideLayer.selectAll("path").data(rivers).join("path")
@@ -566,7 +605,8 @@ const zoom=d3.zoom().scaleExtent([1,32]).on("zoom",e=>{
   $("zoomLevel").textContent=(currentTransform.k<10?currentTransform.k.toFixed(1):Math.round(currentTransform.k))+"×";
   if(lastDisplay) drawScreen(lastDisplay.t,lastDisplay.answer,lastDisplay.learn);
 });
-svg.call(zoom).on("dblclick.zoom",null);
+zoom.filter(event=>(event.type==="wheel"||!event.ctrlKey)&&(!event.button||event.button===2)).clickDistance(7).tapDistance(12);
+svg.call(zoom).on("dblclick.zoom",null).on("contextmenu",event=>event.preventDefault());
 function resetView(animated=true){
   svg.interrupt();
   if(animated)svg.transition().duration(180).call(zoom.transform,d3.zoomIdentity);
@@ -596,19 +636,19 @@ function renderTermSelectors(){
     const items=terms.filter(t=>categoryKey(t)===group);
     const details=document.createElement("details");details.className="term-group";
     const summary=document.createElement("summary");
-    const master=document.createElement("input");master.type="checkbox";master.className="master-check";
+    const master=document.createElement("input");master.type="checkbox";master.className="master-check";master.setAttribute("aria-label",CAT_NAMES[group]||group);
     const title=document.createElement("span");title.textContent=CAT_NAMES[group]||group;
     const count=document.createElement("span");count.className="term-count";count.textContent=items.length;
     summary.append(master,title,count);details.appendChild(summary);
     const list=document.createElement("div");list.className="term-list";
     for(const t of items){
       const row=document.createElement("label");row.className="term-item";
-      const cb=document.createElement("input");cb.type="checkbox";cb.className="term-check";cb.dataset.id=t.id;
+      const cb=document.createElement("input");cb.type="checkbox";cb.className="term-check";cb.dataset.id=t.id;cb.setAttribute("aria-label",t.n);
       cb.checked=previous?previous.has(t.id):true;
       const name=document.createElement("span");name.textContent=t.n;
       row.append(cb,name);
       if(t.custom){
-        const del=document.createElement("button");del.type="button";del.className="delete-term";del.textContent="×";
+        const del=document.createElement("button");del.type="button";del.className="delete-term";del.textContent="×";del.setAttribute("aria-label","Smazat "+t.n);
         del.onclick=e=>{e.preventDefault();e.stopPropagation();customTerms=customTerms.filter(x=>x.id!==t.id);saveCustomTerms();selectionState[currentContinent]=null;renderTermSelectors()};
         row.appendChild(del);
       }else row.appendChild(document.createElement("span"));
@@ -621,8 +661,8 @@ function renderTermSelectors(){
     };
     sync();
     master.onclick=e=>e.stopPropagation();
-    master.onchange=()=>{list.querySelectorAll(".term-check").forEach(x=>x.checked=master.checked);master.indeterminate=false;saveCurrentSelection()};
-    list.onchange=()=>{sync();saveCurrentSelection()};
+    master.onchange=()=>{list.querySelectorAll(".term-check").forEach(x=>x.checked=master.checked);master.indeterminate=false;saveCurrentSelection();updateStartButton()};
+    list.onchange=()=>{sync();saveCurrentSelection();updateStartButton()};
     summary.onclick=e=>{if(e.target===master)e.preventDefault()};
   }
   updateStartButton();
@@ -638,13 +678,17 @@ function updateChoiceButtons(){
   $("quizCountRow").classList.toggle("hidden",settingMode!=="quiz");
   $("startBtn").textContent=settingMode==="quiz"?"Spustit":"Otevřít mapu";
 }
-function updateStartButton(){ $("startBtn").disabled=!ready||selectedTerms().length===0; }
+function updateStartButton(){
+  const n=selectedTerms().length;
+  $("startBtn").disabled=!ready||n===0;
+  $("selectionCount").textContent=n?`Vybráno ${n} pojmů.`:"Vyber alespoň jeden pojem.";
+}
 document.querySelectorAll("[data-continent]").forEach(btn=>btn.onclick=()=>{
   if(btn.dataset.continent===currentContinent)return;
   saveCurrentSelection();
   currentContinent=btn.dataset.continent;
   targetGeometryCache.clear();targetSampleCache.clear();
-  updateChoiceButtons();renderTermSelectors();resetView(false);sizeMap();
+  clearDisplay();updateChoiceButtons();renderTermSelectors();resetView(false);sizeMap();
 });
 document.querySelectorAll("[data-mode]").forEach(btn=>btn.onclick=()=>{
   settingMode=btn.dataset.mode;
@@ -660,17 +704,25 @@ $("allCats").onclick=()=>{$("categorySelectors").querySelectorAll(".term-check,.
 $("noCats").onclick=()=>{$("categorySelectors").querySelectorAll(".term-check,.master-check").forEach(x=>{x.checked=false;x.indeterminate=false});saveCurrentSelection();updateStartButton()};
 
 /* ---------- drawer ---------- */
-function closeDrawer(){
-  $("sideDrawer").classList.add("hidden");$("drawerScrim").classList.add("hidden");
-}
-function openDrawer(kind){
-  $("drawerTitle").textContent=kind==="learn"?"Pojmy":"Historie";
+function closeDrawer(){ showPanel(false); }
+function openDrawer(kind,open=true){
+  $("drawerTitle").textContent=kind==="learn"?"Zeměpisné pojmy":"Historie odpovědí";
   $("learnPanel").classList.toggle("hidden",kind!=="learn");
   $("historyPanel").classList.toggle("hidden",kind!=="history");
-  $("sideDrawer").classList.remove("hidden");$("drawerScrim").classList.remove("hidden");
+  $("startScreen").classList.add("hidden");
+  $("sideDrawer").classList.remove("hidden");
+  showPanel(open);
 }
-$("drawerClose").onclick=closeDrawer;$("drawerScrim").onclick=closeDrawer;
-$("drawerBtn").onclick=()=>openDrawer(activeMode==="learn"?"learn":"history");
+$("drawerClose").onclick=closeDrawer;
+$("panelClose").onclick=closeDrawer;
+$("drawerScrim").onclick=closeDrawer;
+$("drawerBtn").onclick=()=>{
+  if(activeMode==="settings")showPanel(true);
+  else openDrawer(activeMode==="learn"?"learn":"history");
+};
+document.addEventListener("keydown",event=>{
+  if(event.key==="Escape")closeDrawer();
+});
 
 /* ---------- quiz ---------- */
 function balancedQuiz(pool,n){
@@ -689,7 +741,7 @@ function startQuiz(){
   const raw=$("count").value,n=raw==="all"?pool.length:Math.min(+raw,pool.length);
   quizSession={list:balancedQuiz(pool,n),idx:0,answers:Array(n).fill(null)};
   activeMode="quiz";selectedLearn=null;closeDrawer();$("startScreen").classList.add("hidden");$("endScreen").classList.add("hidden");
-  $("drawerBtn").classList.remove("hidden");resetView(false);renderQuestion();
+  $("drawerBtn").classList.remove("hidden");$("drawerBtn").textContent="Historie";openDrawer("history",false);resetView(false);renderQuestion();
 }
 function currentScore(){return quizSession?quizSession.answers.filter(a=>a?.ok).length:0}
 function answeredCount(){return quizSession?quizSession.answers.filter(Boolean).length:0}
@@ -698,12 +750,13 @@ function renderQuestion(){
   if(quizSession.idx>=quizSession.list.length){finishQuiz();return}
   const t=quizSession.list[quizSession.idx],a=quizSession.answers[quizSession.idx];
   clearDisplay();
-  $("appTitle").textContent=(currentContinent==="asia"?"Asie":"Evropa")+" – klikni do mapy";
-  $("subTitle").textContent=t.n+" · "+(CAT_NAMES[categoryKey(t)]||"");
+  $("appTitle").textContent=(currentContinent==="asia"?"Asie":"Evropa")+" · procvičování";
+  setQuestion(t.n,CAT_NAMES[categoryKey(t)]||"Klikni do mapy");
   $("progress").textContent=`${quizSession.idx+1} / ${quizSession.list.length}`;
   $("score").textContent=`Správně: ${currentScore()}`;
   $("prevBtn").disabled=quizSession.idx===0;
   $("nextBtn").disabled=!a;
+  $("nextBtn").textContent=quizSession.idx===quizSession.list.length-1?"Výsledky →":"Další →";
   if(a){
     renderDisplay(t,a,false);
     setFeedback(a.ok?"good":"bad",feedbackFor(t,a));
@@ -713,12 +766,13 @@ function renderQuestion(){
 function renderHistory(){
   const box=$("historyList");box.innerHTML="";
   if(!quizSession)return;
+  $("historyEmpty").classList.toggle("hidden",answeredCount()>0);
   quizSession.answers.forEach((a,i)=>{
     if(!a)return;
     const b=document.createElement("button");
     const name=document.createElement("span");name.textContent=quizSession.list[i].n;
     const mark=document.createElement("span");mark.className=a.ok?"ok":"bad";mark.textContent=a.ok?"✓":"×";
-    b.append(name,mark);b.onclick=()=>{quizSession.idx=i;renderQuestion();closeDrawer()};
+    b.classList.toggle("active",i===quizSession.idx);b.append(name,mark);b.onclick=()=>{activeMode="quiz";$("endScreen").classList.add("hidden");quizSession.idx=i;renderQuestion();closeDrawer()};
     box.appendChild(b);
   });
 }
@@ -729,7 +783,7 @@ $("nextBtn").onclick=()=>{
   if(activeMode==="quiz"&&quizSession&&quizSession.answers[quizSession.idx]){quizSession.idx++;renderQuestion()}
 };
 function finishQuiz(){
-  clearDisplay();activeMode="end";$("drawerBtn").classList.add("hidden");
+  clearDisplay();activeMode="end";setQuestion("Test dokončen","Výsledky");$("prevBtn").disabled=true;$("nextBtn").disabled=true;
   const total=quizSession.list.length,got=currentScore(),pct=Math.round(got/Math.max(1,total)*100);
   $("finalScore").textContent=`${got} / ${total}`;
   $("finalText").textContent=`${pct} %`;
@@ -741,9 +795,9 @@ $("againBtn").onclick=startQuiz;
 function startLearn(){
   activeMode="learn";quizSession=null;selectedLearn=null;clearDisplay();closeDrawer();
   $("startScreen").classList.add("hidden");$("endScreen").classList.add("hidden");
-  $("drawerBtn").classList.remove("hidden");$("prevBtn").disabled=true;$("nextBtn").disabled=true;
+  $("drawerBtn").classList.remove("hidden");$("drawerBtn").textContent="Pojmy";$("prevBtn").disabled=true;$("nextBtn").disabled=true;
   $("appTitle").textContent=(currentContinent==="asia"?"Asie":"Evropa")+" – prohlížení";
-  $("subTitle").textContent="";
+  setQuestion("Vyber pojem nebo klikni do mapy","Prohlížení");
   $("progress").textContent=selectedTerms().length+" pojmů";$("score").textContent="Učení";
   resetView(false);updateLearnList();openDrawer("learn");
 }
@@ -756,15 +810,16 @@ function updateLearnList(){
     const b=document.createElement("button");b.type="button";
     const n=document.createElement("span");n.textContent=t.n;
     const c=document.createElement("span");c.textContent=CAT_NAMES[categoryKey(t)]||"";
-    b.append(n,c);b.onclick=()=>{showLearnTerm(t);closeDrawer()};
+    b.dataset.termId=t.id;b.classList.toggle("active",selectedLearn?.id===t.id);b.append(n,c);b.onclick=()=>{showLearnTerm(t);closeDrawer()};
     box.appendChild(b);
   }
 }
 $("learnSearch").oninput=updateLearnList;
 function showLearnTerm(t){
   selectedLearn=t;clearDisplay();renderDisplay(t,null,true);
-  $("subTitle").textContent=t.n+" · "+(CAT_NAMES[categoryKey(t)]||"");
-  setFeedback("info","Zvýrazněná je správná poloha.");
+  setQuestion(t.n,CAT_NAMES[categoryKey(t)]||"Prohlížení");
+  $("learnList").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.termId===t.id));
+  setFeedback("info",t.capital?"Hlavní město: "+t.capital:t.state?"Stát: "+t.state:"Zvýrazněná je správná poloha.");
 }
 function nearestLearnTerm(lon,lat){
   let best=null,bestD=Infinity;
@@ -789,8 +844,9 @@ function openSettings(){
   activeMode="settings";quizSession=null;selectedLearn=null;addMode=false;pendingPosition=null;
   closeDrawer();clearDisplay();clearFeedback();
   $("endScreen").classList.add("hidden");$("addTermScreen").classList.add("hidden");$("startScreen").classList.remove("hidden");
-  $("drawerBtn").classList.add("hidden");$("prevBtn").disabled=true;$("nextBtn").disabled=true;
-  $("appTitle").textContent="Slepé mapy";$("subTitle").textContent="";
+  $("drawerBtn").classList.remove("hidden");$("drawerBtn").textContent="Otevřít výběr";$("prevBtn").disabled=true;$("nextBtn").disabled=true;
+  $("appTitle").textContent="Evropa a Asie";setQuestion("Vyber mapu a okruhy","Nastavení procvičování");
+  $("sideDrawer").classList.add("hidden");showPanel(true);
   $("progress").textContent="0 / 0";$("score").textContent="Správně: 0";
   updateChoiceButtons();renderTermSelectors();sizeMap();
 }
@@ -823,8 +879,8 @@ svg.on("click",event=>{
 /* ---------- custom terms ---------- */
 $("addTermBtn").onclick=()=>{
   addMode=true;pendingPosition=null;activeMode="add";
-  $("startScreen").classList.add("hidden");clearDisplay();clearFeedback();resetView(false);
-  $("appTitle").textContent="Přidat pojem";$("subTitle").textContent="Klikni do mapy na správnou polohu";
+  $("startScreen").classList.add("hidden");closeDrawer();clearDisplay();clearFeedback();resetView(false);
+  $("appTitle").textContent="Vlastní pojmy";setQuestion("Klikni do mapy na správnou polohu","Přidat pojem");
 };
 $("cancelTermBtn").onclick=()=>{addMode=false;pendingPosition=null;$("addTermScreen").classList.add("hidden");openSettings()};
 $("saveTermBtn").onclick=()=>{
@@ -849,42 +905,37 @@ $("importTermsInput").onchange=async e=>{
 };
 
 /* ---------- loading ---------- */
-let loadingValue=0,loadingTarget=0;
-const loadingTimer=setInterval(()=>{
-  if(loadingValue<loadingTarget){
-    loadingValue=Math.min(loadingTarget,loadingValue+1);
-    $("loadingBar").style.width=loadingValue+"%";$("loadingPercent").textContent=loadingValue+" %";
-  }
-},18);
-function setLoadingTarget(v){loadingTarget=Math.max(loadingTarget,Math.min(100,v))}
+let loadingTarget=0;
+function setLoadingTarget(v){
+  loadingTarget=Math.max(loadingTarget,Math.min(100,v));
+  $("loadingBar").style.width=loadingTarget+"%";
+  $("loadingPercent").textContent=loadingTarget+" %";
+}
 function finishLoading(){
   setLoadingTarget(100);
-  const t=setInterval(()=>{
-    if(loadingValue>=100){
-      clearInterval(t);clearInterval(loadingTimer);
-      setTimeout(()=>{$("loading").classList.add("hidden");$("startScreen").classList.remove("hidden")},80);
-    }
-  },20);
+  $("loading").classList.add("hidden");
 }
 async function getWorld(){
   const urls=[
+    "data/countries-10m.json",
     "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json",
     "https://unpkg.com/world-atlas@2/countries-10m.json",
     "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json"
   ];
   let last;
   for(const url of urls){
-    try{const r=await fetch(url);if(!r.ok)throw Error("HTTP "+r.status);return await r.json()}catch(e){last=e}
+    try{const r=await fetch(url,{signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error("HTTP "+r.status);return await r.json()}catch(e){last=e}
   }
   throw last||Error("Mapový podklad není dostupný.");
 }
 async function getMarine(){
   const urls=[
+    "data/marine-50m.geojson",
     "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_geography_marine_polys.geojson",
     "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_geography_marine_polys.geojson"
   ];
   for(const url of urls){
-    try{const r=await fetch(url);if(!r.ok)throw Error("HTTP "+r.status);const j=await r.json();if(j?.features?.length)return j.features}catch(e){}
+    try{const r=await fetch(url,{signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error("HTTP "+r.status);const j=await r.json();if(j?.features?.length)return j.features}catch(e){}
   }
   return [];
 }
@@ -896,7 +947,10 @@ async function init(){
     const [world,marine]=await Promise.all([getWorld(),getMarine()]);
     setLoadingTarget(66);
     countriesFeature=topojson.feature(world,world.objects.countries);
-    countries=countriesFeature.features.filter(f=>Number(f.id)!==10);
+    // An inverted island ring (notably Maldives in world-atlas 10m)
+    // otherwise fills the world and makes every sea click count as land.
+    countries=countriesFeature.features.filter(f=>Number(f.id)!==10).map(orientGeoForD3);
+    countriesFeature={type:"FeatureCollection",features:countries};
     byIso=new Map(countries.map(f=>[Number(f.id),f]));
     marineFeatures=marine;
     buildLandComponents();
@@ -904,16 +958,20 @@ async function init(){
     prepareMapCaches();
     currentContinent="eu";currentLevel=1;settingMode="quiz";
     sizeMap();updateChoiceButtons();renderTermSelectors();
-    ready=true;updateStartButton();finishLoading();
+    ready=true;openSettings();finishLoading();
   }catch(e){
-    console.error(e);clearInterval(loadingTimer);
+    console.error(e);
     $("loading").innerHTML='<div class="loading-box"><div class="loading-title">Mapy se nepodařilo načíst</div><button onclick="location.reload()">Zkusit znovu</button></div>';
   }
 }
 window.addEventListener("resize",()=>{
-  clearTimeout(window.__mapResize);
-  window.__mapResize=setTimeout(()=>{mapCache.clear();sizeMap();prepareMapCaches()},120);
+  applyLayout();
 });
+let resizeFrame;
+new ResizeObserver(()=>{
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame=requestAnimationFrame(()=>sizeMap());
+}).observe($("mapWrap"));
 
 init();
 })();
