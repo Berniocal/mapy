@@ -3,13 +3,15 @@
 Statická aplikace pro procvičování a prohlížení zeměpisných pojmů. Otevři web přes HTTP (například `python3 -m http.server`). Nevyžaduje sestavení ani API klíč.
 
 - Automatické rozložení podle šířky okna; ruční přepnutí Telefon / Počítač se pamatuje v prohlížeči.
-- Počítač má trvalý boční seznam, telefon sbalovací panel s vlastním posouváním.
+- Tmavý vzhled GeoLabu podle původní Work verze. Počítač má trvalý boční panel, telefon sbalovací panel s vlastním posouváním.
+- Při prohlížení lze kdykoli zaškrtnout celé okruhy i jednotlivé pojmy. Jen vybrané pojmy se zvýrazňují a reagují na kliknutí; změny se projeví okamžitě. Vyhledávání je dostupné pod výběrem okruhů.
+- Bodové značky měst mají při kliknutí přednost před řekou a státem pod nimi. Při přechodu do testu se výukové zvýraznění odstraní.
 - Státy a moře se hodnotí podle oblastí, řeky a pohoří podle průběhu, malé objekty používají toleranci. Vlastní pojmy mají uživatelský bod a poloměr.
 - Přiblížení do 32×, ovládání myší i dotykem, historie odpovědí, výběr jednotlivých pojmů, import/export vlastních pojmů.
 
 ## Kontrola
 
-`node --check app.js` a `node tests/geometry.cjs`.
+`node --check app.js`, `node tests/geometry.cjs` a `node tests/learning.cjs`.
 
 Regresní kontrola pokrývá orientaci polygonů, rozlišení pevniny a vody, moře, stát a řeku. Při úpravě rozložení ověř také úzké okno, otočení telefonu a dlouhý název otázky. Velikost mapy sleduje ResizeObserver, včetně změn výšky hlavičky po odpovědi.
 

@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f6f8">
+<meta name="theme-color" content="#0d1728">
 <meta name="description" content="Slepé mapy Evropy a Asie. Procvičování a prohlížení zeměpisných pojmů na počítači i telefonu.">
-<title>Slepé mapy · Evropa a Asie</title>
-<link rel="stylesheet" href="styles.css?v=31">
+<title>GeoLab · Slepé mapy Evropy a Asie</title>
+<link rel="stylesheet" href="styles.css?v=32">
 </head>
 <body data-layout="pc" data-state="settings">
 <div class="app">
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><div><strong>Slepé mapy</strong><span id="appTitle" class="app-title">Evropa a Asie</span></div></div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><div><strong>GeoLab <span>Evropa a Asie</span></strong><span id="appTitle" class="app-title">Slepé mapy · středoškolská geografie</span></div></div>
     <div class="top-right">
       <label class="layout-control"><span class="sr-only">Rozložení</span><select id="layoutMode" aria-label="Rozložení"><option value="auto">Automaticky</option><option value="phone">Telefon</option><option value="pc">Počítač</option></select></label>
       <span id="progress" class="stat">0 / 0</span><span id="score" class="stat">Správně: 0</span>
@@ -44,6 +44,7 @@
           <button class="choice-btn" data-level="2" type="button">Rozšířené</button>
         </div>
 
+        <section id="termSelection">
         <div class="section-head">
           <strong>Okruhy</strong>
           <div class="mini-actions">
@@ -52,8 +53,9 @@
           </div>
         </div>
 
-        <p class="helper">Zaškrtni celé okruhy, nebo je rozbal a vyber jednotlivé pojmy.</p>
+        <p id="selectionHelp" class="helper">Zaškrtni celé okruhy, nebo je rozbal a vyber jednotlivé pojmy.</p>
         <div id="categorySelectors" class="category-selectors"></div>
+        </section>
 
         <div id="quizCountRow" class="setting-row">
           <label for="count">Počet otázek</label>
@@ -85,7 +87,7 @@
 
       <section id="sideDrawer" class="activity-panel hidden">
         <div class="panel-heading"><h2 id="drawerTitle">Pojmy</h2><button id="drawerClose" class="icon-btn mobile-only" type="button" aria-label="Zavřít seznam">×</button></div>
-        <div id="learnPanel" class="drawer-section hidden"><input id="learnSearch" class="search" type="search" placeholder="Hledat pojem…" aria-label="Hledat pojem"><div id="learnCount" class="helper"></div><div id="learnList" class="learn-list"></div></div>
+        <div id="learnPanel" class="drawer-section hidden"><div id="learnSelection"></div><details class="learn-lookup"><summary>Vyhledat a ukázat pojem</summary><input id="learnSearch" class="search" type="search" placeholder="Hledat pojem…" aria-label="Hledat pojem"><div id="learnCount" class="helper"></div><div id="learnList" class="learn-list"></div></details></div>
         <div id="historyPanel" class="drawer-section hidden"><p class="helper">Kliknutím na odpověď se k ní vrátíš.</p><div id="historyList" class="history-list"></div><p id="historyEmpty" class="helper">Zatím žádné odpovědi. Klikni do mapy na hledané místo.</p></div>
       </section>
       <p class="panel-tip">Přibližuj kolečkem nebo dvěma prsty. Mapu posouvej tažením. Přiblížení zůstává mezi otázkami zachované.</p>
@@ -149,6 +151,6 @@
 <script src="europe-data.js?v=31"></script>
 <script src="asia-data.js?v=31"></script>
 <script src="europe-extra-data.js?v=31"></script>
-<script src="app.js?v=31"></script>
+<script src="app.js?v=32"></script>
 </body>
 </html>

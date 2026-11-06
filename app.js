@@ -152,11 +152,14 @@ const svg = d3.select("#mapSvg");
 const defs = svg.append("defs");
 const landClip = defs.append("clipPath").attr("id","landClip").attr("clipPathUnits","userSpaceOnUse");
 const mapLayer = svg.append("g");
+const learnWaterLayer = mapLayer.append("g").attr("class","learn-water");
 const answerWaterLayer = mapLayer.append("g");
 const baseLayer = mapLayer.append("g");
 const riverGuideLayer = mapLayer.append("g");
+const learnLandLayer = mapLayer.append("g").attr("class","learn-land");
 const answerLandLayer = mapLayer.append("g");
 const answerLineLayer = mapLayer.append("g");
+const learnPointLayer = svg.append("g").attr("class","learn-points");
 const screenLayer = svg.append("g");
 
 let projection = d3.geoMercator();
@@ -284,7 +287,7 @@ function sizeMap(){
   currentMapCache=buildMapCache(currentContinent,w,h);
   currentMapCache.continent=currentContinent;
   projection=currentMapCache.projection;path=currentMapCache.path;
-  drawBase();drawRiverGuide();
+  drawBase();drawRiverGuide();drawLearnHighlights();
   if(center&&center.every(Number.isFinite)){
     const p=projection(center),k=currentTransform.k;
     svg.call(zoom.transform,d3.zoomIdentity.translate(w/2-p[0]*k,h/2-p[1]*k).scale(k));
@@ -573,6 +576,39 @@ function renderDisplay(t,answer=null,learn=false,fromResize=false){
   drawTargetGeometry(t);
   drawScreen(t,answer,learn);
 }
+
+/* Selected learning layers stay visible while one term is being inspected. */
+function clearLearnHighlights(){
+  learnWaterLayer.selectAll("*").remove();
+  learnLandLayer.selectAll("*").remove();
+  learnPointLayer.selectAll("*").remove();
+}
+function drawLearnPoints(){
+  const points=activeMode==="learn"?selectedTerms().filter(t=>t.c==="capital"||t.c==="lake"||t.pointCountry):[];
+  learnPointLayer.selectAll("circle").data(points,t=>t.id).join("circle")
+    .attr("class",t=>"learn-point learn-"+categoryKey(t)).attr("data-term-id",t=>t.id)
+    .attr("cx",t=>screenPoint(t.lon,t.lat)?.[0]).attr("cy",t=>screenPoint(t.lon,t.lat)?.[1])
+    .attr("r",t=>t.c==="capital"?4.5:4);
+}
+function drawLearnHighlights(){
+  clearLearnHighlights();
+  if(activeMode!=="learn"||!currentMapCache)return;
+  // Paint broad areas first, then countries and the more precise line features.
+  const pool=selectedTerms().sort((a,b)=>Number(!!a.line)-Number(!!b.line));
+  for(const t of pool){
+    if(t.c==="capital"||t.c==="lake"||t.pointCountry)continue;
+    let geometry,clip=false;
+    if(t.c==="country")geometry=findCountry(t);
+    else if(t.line)geometry={type:"LineString",coordinates:t.line};
+    else {geometry=targetInfo(t).geometry;clip=t.c==="pen";}
+    if(!geometry)continue;
+    const shape=(t.c==="sea"?learnWaterLayer:learnLandLayer).append("path")
+      .datum(geometry).attr("class","learn-feature learn-"+categoryKey(t)+(t.line?" learn-line":""))
+      .attr("data-term-id",t.id).attr("d",path);
+    if(clip)shape.attr("clip-path","url(#landClip)");
+  }
+  drawLearnPoints();
+}
 function feedbackFor(t,a){
   if(a.ok){
     if(t.c==="country") return `Správně – ${t.n}.`;
@@ -587,7 +623,7 @@ function feedbackFor(t,a){
 function drawRiverGuide(){
   riverGuideLayer.selectAll("*").remove();
   const btn=$("riverToggle");
-  const hasRivers=allTerms().some(t=>(t.ct||"eu")===currentContinent&&t.c==="river");
+  const hasRivers=activeMode!=="learn"&&allTerms().some(t=>(t.ct||"eu")===currentContinent&&t.c==="river");
   btn.classList.toggle("hidden",!hasRivers);
   btn.classList.toggle("active",showRivers);
   btn.setAttribute("aria-pressed",String(showRivers));
@@ -604,6 +640,7 @@ const zoom=d3.zoom().scaleExtent([1,32]).on("zoom",e=>{
   mapLayer.attr("transform",currentTransform);
   $("zoomLevel").textContent=(currentTransform.k<10?currentTransform.k.toFixed(1):Math.round(currentTransform.k))+"×";
   if(lastDisplay) drawScreen(lastDisplay.t,lastDisplay.answer,lastDisplay.learn);
+  if(activeMode==="learn")drawLearnPoints();
 });
 zoom.filter(event=>(event.type==="wheel"||!event.ctrlKey)&&(!event.button||event.button===2)).clickDistance(7).tapDistance(12);
 svg.call(zoom).on("dblclick.zoom",null).on("contextmenu",event=>event.preventDefault());
@@ -682,6 +719,14 @@ function updateStartButton(){
   const n=selectedTerms().length;
   $("startBtn").disabled=!ready||n===0;
   $("selectionCount").textContent=n?`Vybráno ${n} pojmů.`:"Vyber alespoň jeden pojem.";
+  if(activeMode==="learn"){
+    const pool=selectedTerms();
+    if(selectedLearn&&!pool.some(t=>t.id===selectedLearn.id)){
+      selectedLearn=null;clearDisplay();setQuestion("Zaškrtni pojmy, které chceš vidět","Prohlížení");
+    }
+    $("progress").textContent=n+" pojmů";
+    updateLearnList();drawLearnHighlights();
+  }
 }
 document.querySelectorAll("[data-continent]").forEach(btn=>btn.onclick=()=>{
   if(btn.dataset.continent===currentContinent)return;
@@ -741,6 +786,7 @@ function startQuiz(){
   const raw=$("count").value,n=raw==="all"?pool.length:Math.min(+raw,pool.length);
   quizSession={list:balancedQuiz(pool,n),idx:0,answers:Array(n).fill(null)};
   activeMode="quiz";selectedLearn=null;closeDrawer();$("startScreen").classList.add("hidden");$("endScreen").classList.add("hidden");
+  clearLearnHighlights();drawRiverGuide();
   $("drawerBtn").classList.remove("hidden");$("drawerBtn").textContent="Historie";openDrawer("history",false);resetView(false);renderQuestion();
 }
 function currentScore(){return quizSession?quizSession.answers.filter(a=>a?.ok).length:0}
@@ -795,11 +841,13 @@ $("againBtn").onclick=startQuiz;
 function startLearn(){
   activeMode="learn";quizSession=null;selectedLearn=null;clearDisplay();closeDrawer();
   $("startScreen").classList.add("hidden");$("endScreen").classList.add("hidden");
-  $("drawerBtn").classList.remove("hidden");$("drawerBtn").textContent="Pojmy";$("prevBtn").disabled=true;$("nextBtn").disabled=true;
+  $("learnSelection").appendChild($("termSelection"));
+  $("selectionHelp").textContent="Zaškrtnuté okruhy a pojmy se hned zvýrazní na mapě. Rozbal okruh pro výběr jednotlivých pojmů. Kliknutím na zvýrazněné místo zjistíš název.";
+  $("drawerBtn").classList.remove("hidden");$("drawerBtn").textContent="Okruhy a pojmy";$("prevBtn").disabled=true;$("nextBtn").disabled=true;
   $("appTitle").textContent=(currentContinent==="asia"?"Asie":"Evropa")+" – prohlížení";
-  setQuestion("Vyber pojem nebo klikni do mapy","Prohlížení");
+  setQuestion("Zaškrtni pojmy, které chceš vidět","Prohlížení");
   $("progress").textContent=selectedTerms().length+" pojmů";$("score").textContent="Učení";
-  resetView(false);updateLearnList();openDrawer("learn");
+  resetView(false);updateLearnList();drawRiverGuide();drawLearnHighlights();openDrawer("learn");
 }
 function updateLearnList(){
   const q=$("learnSearch").value.trim().toLocaleLowerCase("cs");
@@ -822,26 +870,32 @@ function showLearnTerm(t){
   setFeedback("info",t.capital?"Hlavní město: "+t.capital:t.state?"Stát: "+t.state:"Zvýrazněná je správná poloha.");
 }
 function nearestLearnTerm(lon,lat){
-  let best=null,bestD=Infinity;
   const pool=selectedTerms();
+  const click=screenPoint(lon,lat);
+  let best=null,bestD=Infinity;
+  // Points and lines take precedence over the country beneath them.
   for(const t of pool){
-    if(t.c==="country"){
-      const f=findCountry(t);if(f&&!t.pointCountry&&d3.geoContains(f,[lon,lat]))return t;
-    }else if(t.line){
-      const d=distanceToLine(lat,lon,t.line);if(d<bestD){bestD=d;best=t}
-    }else if(["pen","isl","sea","des","low","mnt"].includes(t.c)||t.custom){
-      if(insideCoreTarget(t,lon,lat))return t;
-      const d=haversine(lat,lon,t.lat,t.lon);if(d<bestD){bestD=d;best=t}
-    }else{
-      const d=haversine(lat,lon,t.lat,t.lon);if(d<bestD){bestD=d;best=t}
+    if(t.line||t.c==="capital"||t.c==="lake"||t.pointCountry){
+      const nearest=t.line?nearestPointOnLine(lat,lon,t.line):t;
+      const p=screenPoint(nearest.lon,nearest.lat);
+      const d=p&&click?Math.hypot(p[0]-click[0],p[1]-click[1]):Infinity;
+      const score=d+(t.line?12:0);
+      if(d<=12&&score<bestD){bestD=score;best=t;}
     }
   }
-  return best&&bestD<=Math.max(120,best.r||80)?best:null;
+  if(best)return best;
+  const areas=pool.filter(t=>t.c!=="country"&&!t.line&&t.c!=="capital"&&t.c!=="lake"&&insideCoreTarget(t,lon,lat));
+  areas.sort((a,b)=>d3.geoArea(targetInfo(a).geometry)-d3.geoArea(targetInfo(b).geometry));
+  if(areas.length)return areas[0];
+  return pool.find(t=>t.c==="country"&&!t.pointCountry&&findCountry(t)&&d3.geoContains(findCountry(t),[lon,lat]))||null;
 }
 
 /* ---------- settings ---------- */
 function openSettings(){
   activeMode="settings";quizSession=null;selectedLearn=null;addMode=false;pendingPosition=null;
+  $("startScreen").querySelector(".start-panel").insertBefore($("termSelection"),$("quizCountRow"));
+  $("selectionHelp").textContent="Zaškrtni celé okruhy, nebo je rozbal a vyber jednotlivé pojmy.";
+  clearLearnHighlights();drawRiverGuide();
   closeDrawer();clearDisplay();clearFeedback();
   $("endScreen").classList.add("hidden");$("addTermScreen").classList.add("hidden");$("startScreen").classList.remove("hidden");
   $("drawerBtn").classList.remove("hidden");$("drawerBtn").textContent="Otevřít výběr";$("prevBtn").disabled=true;$("nextBtn").disabled=true;
